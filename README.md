@@ -27,7 +27,7 @@ The interface is optimized for modern Android mobile devices and full-screen usa
 - Web Speech API (SpeechSynthesis)
 
 ## Run Locally
-1. Open dictionary.html in a browser.
+1. Open index.html in a browser.
 2. For mobile validation, use Chrome on Android.
 3. For the best experience, use full-screen browser mode.
 
