@@ -1320,8 +1320,15 @@ function openVoicePopup() {
   const title = document.getElementById('voicePopupTitle');
   if (!popup || !title) return;
 
+  // Re-fetch voices if not yet loaded (e.g. GitHub Pages slow init)
+  if (!synthVoices.length) {
+    const fresh = window.speechSynthesis.getVoices();
+    if (fresh.length) synthVoices = fresh;
+  }
+
   const modeTitle = selectedVoice === 'female' ? 'Female voice names' : (selectedVoice === 'male' ? 'Male voice names' : 'Child voice names');
   title.textContent = modeTitle;
+  syncVoiceNameList();
   popup.classList.remove('hidden');
   voicePopupOpen = true;
 }
@@ -1347,20 +1354,22 @@ window.speechSynthesis.onvoiceschanged = () => {
   }
   syncVoiceNameList();
 };
-setTimeout(() => {
-  synthVoices = window.speechSynthesis.getVoices();
-  if (!selectedVoiceName) {
-    const saved = selectedVoiceByType[selectedVoice];
-    if (saved) {
-      selectedVoiceName = saved;
-    } else {
-      const best = bestVoiceFor(selectedVoice);
-      selectedVoiceName = best ? best.name : '';
+
+// Retry loading voices with backoff — needed for GitHub Pages / HTTPS where voices load slowly
+(function tryLoadVoices(attempt) {
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    synthVoices = voices;
+    if (!selectedVoiceName) {
+      const saved = selectedVoiceByType[selectedVoice];
+      selectedVoiceName = saved || (bestVoiceFor(selectedVoice) || {name:''}).name;
       selectedVoiceByType[selectedVoice] = selectedVoiceName;
     }
+    syncVoiceNameList();
+  } else if (attempt < 12) {
+    setTimeout(() => tryLoadVoices(attempt + 1), 150 * (attempt + 1));
   }
-  syncVoiceNameList();
-}, 500);
+})(0);
 
 function pickVoice(type) {
   const pool = getVoicePool();
