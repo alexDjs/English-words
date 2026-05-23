@@ -1243,19 +1243,25 @@ function getVoicesForType(type) {
     // return ALL voices on the device — no lang/block filter so Android users see everything
     return getSynthVoices();
   } else if (type === 'female') {
-    list = pool.filter(v => WORKING_FEMALE_RE.test(v.name));
-    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
+    list = pool.filter(v => WORKING_FEMALE_RE.test(v.name) && !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name) && !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   } else if (type === 'male') {
-    list = pool.filter(v => MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
-    if (!list.length) list = pool.filter(v => !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+    list = pool.filter(v => MALE_RE.test(v.name) && !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => !FEMALE_RE.test(v.name) && !CHILD_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   } else {
-    list = pool.filter(v => CHILD_RE.test(v.name));
-    // If no explicit child voice exists, prefer a neutral fallback instead of forcing female.
-    if (!list.length) list = pool.filter(v => !BLOCKED_MALE_RE.test(v.name));
+    list = pool.filter(v => CHILD_RE.test(v.name) && !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name) && !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
     if (!list.length) list = pool.filter(v => !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   }
 
-  if (!list.length) list = pool;
+  if (!list.length) {
+    if (type === 'male') {
+      list = pool;
+    } else {
+      list = pool.filter(v => !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+      if (!list.length) list = pool;
+    }
+  }
 
   const sorted = [...list].sort((a, b) => {
     const ra = voiceRank(a.name);
