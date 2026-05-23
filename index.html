@@ -1355,21 +1355,22 @@ window.speechSynthesis.onvoiceschanged = () => {
   syncVoiceNameList();
 };
 
-// Retry loading voices with backoff — needed for GitHub Pages / HTTPS where voices load slowly
-(function tryLoadVoices(attempt) {
+// Retry loading voices until count stabilizes — needed for GitHub Pages where voices arrive in batches
+(function tryLoadVoices(attempt, lastCount) {
   const voices = window.speechSynthesis.getVoices();
-  if (voices.length > 0) {
+  if (voices.length !== lastCount) {
     synthVoices = voices;
-    if (!selectedVoiceName) {
+    if (!selectedVoiceName && voices.length) {
       const saved = selectedVoiceByType[selectedVoice];
       selectedVoiceName = saved || (bestVoiceFor(selectedVoice) || {name:''}).name;
       selectedVoiceByType[selectedVoice] = selectedVoiceName;
     }
     syncVoiceNameList();
-  } else if (attempt < 12) {
-    setTimeout(() => tryLoadVoices(attempt + 1), 150 * (attempt + 1));
   }
-})(0);
+  if (attempt < 15) {
+    setTimeout(() => tryLoadVoices(attempt + 1, voices.length), 200 * Math.min(attempt + 1, 5));
+  }
+})(0, -1);
 
 function pickVoice(type) {
   const pool = getVoicePool();
