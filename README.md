@@ -1,35 +1,35 @@
 # English-words
 
-## О проекте
-English-words — это интерактивное веб-приложение для изучения английской лексики с русским переводом, транскрипцией и озвучиванием. Приложение работает полностью в браузере и ориентировано на быстрый ежедневный словарный тренинг.
+## Project Overview
+English-words is an interactive web application for learning English vocabulary with Russian translations, phonetic transcription, and pronunciation playback. The app runs entirely in the browser and is designed for fast daily vocabulary practice.
 
-## Ключевые возможности
-- Поиск слов по английскому написанию и русскому переводу.
-- Алфавитная навигация по словарю.
-- Переключение режимов отображения перевода (включая тренировочный режим с скрытием перевода).
-- Выбор типа голоса для озвучивания и воспроизведение произношения слов.
-- Практика в формате мини-квиза.
-- Режим карточек (Flashcards).
-- Модуль субтитров для чтения и тренировки произношения фраз.
+## Key Features
+- Word search by English text and Russian translation.
+- Alphabet navigation for quick dictionary browsing.
+- Translation visibility modes, including a training mode with hidden translations.
+- Voice type selection and pronunciation playback.
+- Practice mode with quiz-style exercises.
+- Flashcards mode.
+- Subtitles module for sentence reading and pronunciation practice.
 
-## Адаптация под Redmi 14 (Android)
-Приложение адаптировано для корректной полноэкранной работы на смартфонах Android, включая Redmi 14:
-- Mobile-first поведение интерфейса на узких экранах.
-- Корректный fullscreen viewport с учетом реальной высоты экрана и системных панелей Android.
-- Динамический пересчет sticky-элементов (header/навигация), чтобы контент не перекрывался.
-- Оптимизированная табличная разметка: строки слов перестраиваются в мобильный формат для удобного чтения.
-- Улучшенное управление на тач-устройствах (tap-to-reveal для скрытого перевода).
+## Responsive and Mobile Support
+The interface is optimized for modern Android mobile devices and full-screen usage:
+- Mobile-first behavior on narrow screens.
+- Correct viewport height handling with system UI consideration.
+- Dynamic sticky offset recalculation to prevent content overlap.
+- Optimized word-row layout for mobile readability.
+- Improved touch interaction for hidden translation reveal.
 
-## Технологии
+## Technology Stack
 - HTML5
 - CSS3 (responsive layout)
-- Vanilla JavaScript (без внешних фреймворков)
+- Vanilla JavaScript (no external frameworks)
 - Web Speech API (SpeechSynthesis)
 
-## Запуск
-1. Откройте файл `dictionary.html` в браузере.
-2. Для мобильной проверки рекомендуется Chrome на Android.
-3. Для максимального эффекта используйте полноэкранный режим браузера.
+## Run Locally
+1. Open dictionary.html in a browser.
+2. For mobile validation, use Chrome on Android.
+3. For the best experience, use full-screen browser mode.
 
-## Назначение
-Проект подходит для самостоятельной тренировки словарного запаса, повторения слов и работы с произношением на мобильных устройствах и десктопе.
+## Purpose
+This project is suitable for self-study vocabulary training, spaced review, and pronunciation practice on both mobile and desktop devices.
