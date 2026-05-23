@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English–Russian Dictionary</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --header-h: 53px;
+      --alpha-h: 32px;
+      --app-vh: 1vh;
+    }
+
+    html {
+      height: 100%;
+      background: #f0f2f5;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      user-select: none;
+      min-height: 100%;
+      min-height: calc(var(--app-vh) * 100);
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* ─── HEADER ─── */
+    header {
+      background: #1a2740;
+      color: #fff;
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 1.2rem; white-space: nowrap; }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-left: auto;
+      position: relative;
+    }
+
+    .voice-label { font-size: 0.8rem; color: #aab; }
+
+    .voice-group-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .voice-group { display: flex; gap: 6px; }
+
+    .voice-popup {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 260px;
+      max-width: 420px;
+      background: #1f2f4d;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+      padding: 10px;
+      z-index: 450;
+    }
+    .voice-popup.hidden { display: none; }
+
+    .voice-popup-title {
+      font-size: 0.74rem;
+      color: #b5c5de;
+      margin-bottom: 8px;
+      white-space: nowrap;
+    }
+
+    .voice-name-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 160px;
+      overflow: auto;
+      padding-right: 2px;
+      scrollbar-width: thin;
+    }
+
+    .voice-name-btn {
+      padding: 3px 10px;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      color: #e7edf7;
+      font-size: 0.74rem;
+      cursor: pointer;
+      white-space: nowrap;
+      flex: 0 0 auto;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .voice-name-btn:hover { border-color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.14); }
+    .voice-name-btn.active { border-color: #fff; background: #fff; color: #1a2740; font-weight: 700; }
+
+    .voice-btn {
+      padding: 5px 13px;
+      border: 2px solid rgba(255,255,255,0.5);
+      background: transparent;
+      color: #fff;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .voice-btn:hover { border-color: #fff; }
+    .voice-btn.active { background: #fff; color: #1a2740; border-color: #fff; font-weight: 600; }
+
+    .toggle-btn {
+      padding: 5px 14px;
+      background: #c0392b;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: background 0.2s;
+    }
+    .toggle-btn.show-mode { background: #27ae60; }
+
+    .word-count {
+      font-size: 0.75rem;
+      color: #99a;
+      white-space: nowrap;
+      display: inline-block;
+      min-width: 72px;
+      text-align: right;
+    }
+
+    /* ─── ALPHABET NAV ─── */
+    .alpha-nav {
+      background: #243350;
+      padding: 6px 20px;
+      position: sticky;
+      top: var(--header-h);
+      z-index: 199;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .alpha-nav:empty {
+      display: none;
+      padding: 0;
+    }
+
+    .alpha-link {
+      color: #8899bb;
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .alpha-link:hover { background: #1a2740; color: #fff; }
+
+    /* ─── CONTENT ─── */
+    .container {
+      max-width: 960px;
+      margin: 20px auto;
+      padding: 0 16px 40px;
+    }
+
+    .letter-group { margin-bottom: 12px; }
+
+    .letter-header {
+      background: #2980b9;
+      color: #fff;
+      padding: 7px 16px;
+      font-size: 1.3rem;
+      font-weight: 700;
+      border-radius: 6px 6px 0 0;
+      position: sticky;
+      top: calc(var(--header-h) + var(--alpha-h));
+      z-index: 100;
+    }
+
+    /* ─── TABLE ─── */
+    .word-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+
+    .word-table tr { border-bottom: 1px solid #eef0f3; }
+    .word-table tr:last-child { border-bottom: none; }
+    .word-table tr:nth-child(even) { background: #f7f9fc; }
+    .word-table tr:hover { background: #eaf4ff; }
+
+    .word-table td {
+      padding: 9px 14px;
+      vertical-align: middle;
+    }
+
+    .col-en {
+      font-weight: 600;
+      color: #1a2740;
+      width: 22%;
+      font-size: 0.97rem;
+    }
+
+    .col-tr {
+      color: #888;
+      font-style: italic;
+      font-size: 0.82rem;
+      width: 26%;
+    }
+
+    .col-ru {
+      color: #1e7e3e;
+      font-size: 0.92rem;
+      width: 37%;
+      transition: color 0.15s;
+    }
+
+    /* Hidden translation — text invisible, reveal on hover */
+    .col-ru.hidden {
+      color: transparent;
+      background: #dde2ea;
+      border-radius: 4px;
+      user-select: none;
+      cursor: help;
+      position: relative;
+    }
+    .col-ru.hidden:hover {
+      color: #1e7e3e;
+      background: #d0f0dc;
+    }
+    .col-ru.hidden.revealed-mobile {
+      color: #1e7e3e;
+      background: #d0f0dc;
+    }
+
+    /* ─── PLAY BUTTON ─── */
+    .col-play { width: 15%; text-align: center; }
+
+    .play-btn {
+      background: #2980b9;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+      line-height: 1;
+    }
+    .play-btn:hover  { background: #1f6591; transform: scale(1.12); }
+    .play-btn:active { transform: scale(0.93); }
+    .play-btn.playing { background: #c0392b; }
+
+    /* ─── SEARCH ─── */
+    .search-wrap {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.1);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 22px;
+      padding: 4px 12px;
+      gap: 7px;
+      flex: 1 1 200px;
+      max-width: 280px;
+    }
+    .search-wrap:focus-within {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.7);
+    }
+    .search-icon { font-size: 0.9rem; opacity: 0.7; }
+    #searchInput {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.88rem;
+      width: 100%;
+    }
+    #searchInput::placeholder { color: rgba(255,255,255,0.45); }
+    #clearBtn {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      display: none;
+    }
+    #clearBtn:hover { color: #fff; }
+
+    .no-results {
+      text-align: center;
+      color: #999;
+      padding: 40px;
+      font-size: 1rem;
+    }
+
+    /* ─── PRACTICE BUTTON ─── */
+    .prac-open-btn {
+      padding: 5px 16px;
+      background: #8e44ad;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .prac-open-btn:hover { background: #732d91; }
+
+    /* ─── LEVEL FILTER ─── */
+    .level-filter {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .level-btn {
+      padding: 4px 13px;
+      background: #f0f0f0;
+      color: #555;
+      border: 1.5px solid #ccc;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      white-space: nowrap;
+    }
+    .level-btn:hover { background: #e0e0e0; border-color: #aaa; }
+    .level-btn.active { background: #2980b9; color: #fff; border-color: #2980b9; }
+
+    /* ─── PRACTICE OVERLAY ─── */
+    .prac-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+    .prac-overlay.hidden { display: none; }
+
+    .prac-box {
+      background: #fff;
+      border-radius: 14px;
+      width: 92%;
+      max-width: 640px;
+      max-height: calc(var(--app-vh) * 100 - 16px);
+      overflow-y: auto;
+      padding: 30px 28px 26px;
+      position: relative;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+    }
+    .prac-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #999;
+      line-height: 1;
+      padding: 0 4px;
+    }
+    .prac-close-btn:hover { color: #333; }
+    .prac-screen.hidden { display: none; }
+
+    /* Setup */
+    .prac-title    { font-size: 1.4rem; font-weight: 700; color: #1a2740; margin-bottom: 8px; text-align: center; }
+    .prac-subtitle { font-size: 0.88rem; color: #777; text-align: center; margin-bottom: 18px; }
+    .prac-count-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 22px; }
+    .prac-count-btn {
+      padding: 7px 20px;
+      border: 2px solid #8e44ad;
+      background: #fff;
+      color: #8e44ad;
+      border-radius: 22px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.15s;
+    }
+    .prac-count-btn:hover, .prac-count-btn.prac-active { background: #8e44ad; color: #fff; }
+    .prac-start-btn {
+      display: block; width: 100%; padding: 12px;
+      background: #8e44ad; color: #fff; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
+    }
+    .prac-start-btn:hover:not(:disabled) { background: #732d91; }
+    .prac-start-btn:disabled { background: #c8a8df; cursor: default; }
+
+    /* Quiz */
+    .prac-header-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.78rem; color: #999; margin-bottom: 8px;
+    }
+    .prac-round-badge {
+      display: inline-block; padding: 3px 12px; border-radius: 14px;
+      font-size: 0.8rem; font-weight: 700; margin-bottom: 10px;
+    }
+    .badge-en { background: #d6eaff; color: #1558a7; }
+    .badge-ru { background: #d6f0e0; color: #1a6b35; }
+    .prac-progress-bar { height: 7px; background: #e8e8ef; border-radius: 4px; overflow: hidden; margin-bottom: 4px; }
+    .prac-progress-fill {
+      height: 100%; background: linear-gradient(90deg,#8e44ad,#c0392b);
+      border-radius: 4px; transition: width 0.3s;
+    }
+    .prac-progress-label { font-size: 0.73rem; color: #bbb; text-align: right; margin-bottom: 18px; }
+    .prac-question {
+      text-align: center; min-height: 70px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 5px; margin-bottom: 16px;
+    }
+    .prac-word-en { font-size: 1.7rem; font-weight: 700; color: #1a2740; }
+    .prac-word-tr { font-size: 0.85rem; color: #aaa; font-style: italic; }
+    .prac-word-ru { font-size: 1.3rem; font-weight: 600; color: #1e7e3e; }
+    .prac-speak-btn {
+      background: #2980b9; color: #fff; border: none; border-radius: 50%;
+      width: 34px; height: 34px; font-size: 15px; cursor: pointer;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+      margin-bottom: 8px; box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+    }
+    .prac-speak-btn:hover { background: #1f6591; }
+    .prac-speak-btn:active, .prac-speak-btn.speaking {
+      background: #1a5276; transform: scale(0.88); box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+    .prac-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .prac-option {
+      padding: 12px 10px; border: 2px solid #e0e0e8; background: #f9f9fb;
+      color: #333; border-radius: 10px; cursor: pointer; font-size: 0.87rem;
+      text-align: center; transition: all 0.15s; line-height: 1.3; min-height: 50px;
+    }
+    .prac-option:hover:not(:disabled) { border-color: #8e44ad; background: #f4eaff; }
+    .prac-option.opt-correct { border-color: #27ae60 !important; background: #d5f5e3 !important; color: #1a6b35; font-weight: 600; }
+    .prac-option.opt-wrong   { border-color: #e74c3c !important; background: #fde8e8 !important; color: #922; }
+    .prac-next-btn {
+      display: block; width: 100%; padding: 11px;
+      background: #1a2740; color: #fff; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s, opacity 0.2s;
+    }
+    .prac-next-btn:hover:not(:disabled) { background: #243350; }
+    .prac-next-btn:disabled { opacity: 0.25; cursor: default; }
+
+    /* ── Quiz badges ── */
+    .badge-listen { background: #fff3e0; color: #d35400; }
+    .badge-en     { background: #d6eaff; color: #1558a7; }
+    .badge-ru     { background: #d6f0e0; color: #1a6b35; }
+    .badge-match  { background: #f3e5f5; color: #7b1fa2; }
+    .prac-round-badge { display: block; padding: 5px 12px; border-radius: 10px; font-size: 0.82rem; font-weight: 700; margin-bottom: 10px; text-align: center; }
+    .prac-listen-icon {
+      font-size: 3.6rem; line-height: 1; cursor: pointer; display: inline-block;
+      background: none; border: none; padding: 8px 14px; border-radius: 50%;
+      transition: transform 0.1s, background 0.15s;
+    }
+    .prac-listen-icon:hover { background: #e8f4ff; }
+    .prac-listen-icon:active { transform: scale(0.85); }
+    .prac-speak-inline {
+      background: none; border: none; cursor: pointer; font-size: 1.2rem;
+      margin-left: 8px; vertical-align: middle; padding: 2px 6px;
+      border-radius: 8px; transition: transform 0.1s, background 0.15s;
+    }
+    .prac-speak-inline:hover { background: #e8f4ff; }
+    .prac-speak-inline:active { transform: scale(0.82); }
+
+    /* ── Matching (drop-slot) ── */
+    .match-study-grid {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 14px;
+    }
+    .match-study-card {
+      background: #eef2ff; border: 1.5px solid #c5ceef;
+      border-radius: 10px; padding: 10px 14px; text-align: center; min-width: 90px;
+    }
+    .match-study-en { font-weight: 700; color: #1a2740; font-size: 0.93rem; }
+    .match-study-speak {
+      background: none; border: none; cursor: pointer; font-size: 0.85rem;
+      color: #2980b9; padding: 0 0 0 4px; vertical-align: middle;
+      transition: transform 0.1s; line-height: 1;
+    }
+    .match-study-speak:active { transform: scale(0.8); }
+    .match-study-ru { font-size: 0.8rem; color: #1e7e3e; margin-top: 4px; }
+    .match-hint { font-size: 0.8rem; color: #888; text-align: center; margin-bottom: 12px; }
+    .match-begin-btn {
+      display: block; width: 100%; padding: 11px;
+      background: #27ae60; color: #fff; border: none; border-radius: 10px;
+      font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: background 0.2s; margin-bottom: 4px;
+    }
+    .match-begin-btn:hover { background: #219a52; }
+    /* matching play area — fixed heights so modal never resizes */
+    #pracMatch { min-height: 370px; }
+    #matchStudyArea { min-height: 245px; }
+    .match-slots-row {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 10px;
+      min-height: 140px; max-height: 155px; overflow-y: auto;
+    }
+    .match-slot-card { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .match-slot-en {
+      font-weight: 700; color: #1a2740; font-size: 0.75rem;
+      padding: 3px 8px; background: #e8ecf4; border-radius: 7px;
+      white-space: nowrap; cursor: pointer; transition: background 0.15s;
+    }
+    .match-slot-en:hover { background: #d6e0f5; }
+    .match-slot-box {
+      min-width: 68px; max-width: 130px; min-height: 32px; border: 2px dashed #bbc4e0;
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 0.72rem; color: #aaa;
+      transition: all 0.2s; padding: 3px 6px; text-align: center;
+      word-break: break-word; overflow-wrap: break-word; line-height: 1.3;
+    }
+    .match-slot-box:hover:not(.mslot-filled) { border-color: #8e44ad; background: #f4eaff; color: #8e44ad; border-style: solid; }
+    .match-slot-box.mslot-filled { border-style: solid; border-color: #27ae60; background: #d5f5e3; color: #1a6b35; font-weight: 600; cursor: default; font-size: 0.7rem; word-break: break-word; overflow-wrap: break-word; }
+    .match-slot-box.mslot-fail   { border-style: solid; border-color: #e74c3c !important; background: #fde8e8 !important; animation: mshake 0.3s; }
+    .match-slot-box.drag-over:not(.mslot-filled) { border-style: solid; border-color: #3498db; background: #d6eaf8; color: #1a6bab; transform: scale(1.06); }
+    @keyframes mshake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+    .match-bottom-area {
+      background: #f5f6fa; border-radius: 10px; padding: 8px 10px;
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+      height: 90px; overflow-y: auto;
+    }
+    .match-bottom-btn {
+      padding: 5px 10px; border: 2px solid #d0d4e0; background: #fff;
+      color: #333; border-radius: 20px; cursor: grab; font-size: 0.78rem;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .match-bottom-btn:hover { border-color: #8e44ad; background: #f4eaff; }
+    .match-bottom-btn.mbsel { border-color: #8e44ad; background: #ede0fa; font-weight: 600; }
+    .match-bottom-btn.dragging { opacity: 0.35; transform: scale(0.95); cursor: grabbing; }
+
+    /* Result screens */
+    .prac-result-rounds { font-size: 0.78rem; color: #999; margin: 8px 0 12px; text-align: center; }
+    .prac-result-box { text-align: center; padding: 8px 0 4px; }
+    .prac-result-emoji { font-size: 2.8rem; margin-bottom: 8px; }
+    .prac-result-title { font-size: 1.2rem; font-weight: 700; color: #1a2740; margin-bottom: 14px; }
+    .prac-result-stat { font-size: 0.93rem; color: #555; margin: 6px 0; }
+    .prac-result-stat strong { color: #1a2740; }
+    .prac-result-actions { margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .prac-btn-primary {
+      padding: 10px 28px; background: #8e44ad; color: #fff; border: none;
+      border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .prac-btn-primary:hover { background: #732d91; }
+    .prac-btn-secondary {
+      padding: 10px 22px; background: #eee; color: #444; border: none;
+      border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .prac-btn-secondary:hover { background: #ddd; }
+
+    /* ─── FLASHCARDS ─── */
+    .fc-open-btn {
+      padding: 7px 16px; background: #16a085; color: #fff;
+      border: none; border-radius: 20px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; transition: background 0.2s;
+    }
+    .fc-open-btn:hover { background: #117a65; }
+    .fc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .fc-overlay.hidden { display: none; }
+    .fc-box .hidden { display: none; }
+    .fc-box { background: #fff; border-radius: 18px; width: 100%;
+      max-width: 440px; padding: 28px 24px 24px; position: relative;
+      max-height: calc(var(--app-vh) * 100 - 32px); overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0,0,0,.3); }
+    .fc-close-btn { position: absolute; top: 14px; right: 16px;
+      background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #888; }
+    .fc-close-btn:hover { color: #333; }
+    .fc-title  { font-size: 1.25rem; font-weight: 700; color: #1a2740; text-align: center; margin-bottom: 6px; }
+    .fc-subtitle { font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 18px; }
+    .fc-count-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 22px; }
+    .fc-count-btn {
+      padding: 8px 18px; border: 2px solid #d0d4e0; background: #f9f9fb;
+      color: #333; border-radius: 22px; cursor: pointer; font-size: 0.88rem;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .fc-count-btn:hover { border-color: #16a085; color: #16a085; }
+    .fc-count-btn.active { border-color: #16a085; background: #16a085; color: #fff; }
+    .fc-start-btn {
+      display: block; width: 100%; padding: 12px;
+      background: #16a085; color: #fff; border: none; border-radius: 12px;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
+    }
+    .fc-start-btn:hover:not(:disabled) { background: #117a65; }
+    .fc-start-btn:disabled { background: #aaa; cursor: default; }
+    /* card flip */
+    .fc-progress-bar { height: 5px; background: #eee; border-radius: 3px; margin-bottom: 6px; overflow: hidden; }
+    .fc-progress-fill { height: 100%; background: #16a085; border-radius: 3px; transition: width 0.3s; }
+    .fc-progress-label { font-size: 0.8rem; color: #999; text-align: right; margin-bottom: 18px; }
+    .fc-scene { perspective: 900px; width: 100%; height: 210px; cursor: pointer; margin-bottom: 18px; }
+    .fc-card {
+      width: 100%; height: 100%; position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+      border-radius: 18px;
+    }
+    .fc-card.flipped { transform: rotateY(180deg); }
+    .fc-front, .fc-back {
+      position: absolute; inset: 0; backface-visibility: hidden;
+      border-radius: 18px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; padding: 24px 20px;
+    }
+    .fc-front {
+      background: #fff; border: 2px solid #d8e0f0;
+      box-shadow: 0 4px 18px rgba(0,0,0,.1);
+    }
+    .fc-back {
+      background: linear-gradient(135deg,#1a2740,#2c3e6e);
+      color: #fff; transform: rotateY(180deg);
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+    .fc-word-en { font-size: 1.7rem; font-weight: 700; color: #1a2740; text-align: center; }
+    .fc-transcription { font-size: 0.85rem; color: #888; font-style: italic; }
+    .fc-word-ru { font-size: 1.4rem; font-weight: 600; text-align: center; color: #e8f4f8; }
+    .fc-hint { font-size: 0.75rem; color: #bbb; margin-top: 6px; }
+    .fc-speak-btn {
+      background: #e8f4ff; border: none; border-radius: 50%;
+      width: 38px; height: 38px; font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s; margin-top: 6px;
+    }
+    .fc-speak-btn:hover { background: #c8e6ff; }
+    .fc-speak-btn:active { transform: scale(0.85); }
+    .fc-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .fc-nav-btn {
+      padding: 9px 22px; border: 2px solid #d0d4e0; background: #f5f6fa;
+      color: #333; border-radius: 10px; cursor: pointer; font-size: 0.9rem;
+      font-weight: 600; transition: all 0.15s;
+    }
+    .fc-nav-btn:hover:not(:disabled) { border-color: #16a085; color: #16a085; background: #e8f7f3; }
+    .fc-nav-btn:disabled { opacity: 0.35; cursor: default; }
+    .fc-counter { font-size: 0.88rem; color: #888; font-weight: 600; }
+
+    /* ─── SUBTITLES MODAL ─── */
+    .sub-open-btn {
+      padding: 5px 14px; background: #8e44ad; color: #fff;
+      border: none; border-radius: 20px; cursor: pointer;
+      font-size: 0.8rem; transition: background 0.2s;
+    }
+    .sub-open-btn:hover { background: #732d91; }
+
+    .sub-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+    }
+    .sub-overlay.hidden { display: none; }
+    .sub-input-wrap.hidden { display: none; }
+    .sub-player-wrap.hidden { display: none; }
+
+    .sub-box {
+      background: #fff; border-radius: 14px;
+      width: min(96vw, 820px); max-height: calc(var(--app-vh) * 100 - 16px);
+      display: flex; flex-direction: column;
+      box-shadow: 0 8px 40px rgba(0,0,0,.3); overflow: hidden;
+    }
+
+    .sub-header {
+      background: #1a2740; color: #fff;
+      padding: 14px 18px; display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .sub-title { font-size: 1rem; font-weight: 700; flex: 1; }
+    .sub-close-btn {
+      background: none; border: none; color: #fff; font-size: 1.2rem;
+      cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 6px;
+    }
+    .sub-close-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* input screen */
+    .sub-input-wrap { padding: 18px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .sub-hint { font-size: 0.82rem; color: #666; }
+    #subTextarea {
+      width: 100%; flex: 1; min-height: 260px; resize: vertical;
+      border: 1.5px solid #d0d4e0; border-radius: 8px;
+      padding: 10px 12px; font-size: 0.88rem; font-family: inherit;
+      line-height: 1.5; outline: none;
+    }
+    #subTextarea:focus { border-color: #8e44ad; }
+    .sub-load-btn {
+      align-self: flex-end; padding: 8px 28px;
+      background: #8e44ad; color: #fff; border: none;
+      border-radius: 22px; cursor: pointer; font-size: 0.9rem; font-weight: 600;
+    }
+    .sub-load-btn:hover { background: #732d91; }
+    .sub-file-btn {
+      display: inline-block; padding: 6px 16px;
+      background: #f0e6ff; border: 1.5px solid #8e44ad;
+      color: #8e44ad; border-radius: 20px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+    }
+    .sub-file-btn:hover { background: #d9b8ff; }
+
+    /* player screen */
+    .sub-player-wrap { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .sub-controls {
+      padding: 10px 16px; background: #f5f6fa;
+      border-bottom: 1px solid #e0e4ee;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .sub-ctrl-btn {
+      padding: 6px 16px; border: 1.5px solid #c0c4d0;
+      background: #fff; border-radius: 20px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; transition: all 0.15s;
+    }
+    .sub-ctrl-btn:hover { border-color: #8e44ad; color: #8e44ad; }
+    .sub-ctrl-btn.playing { background: #8e44ad; color: #fff; border-color: #8e44ad; }
+    .sub-translate-btn { border-color: #27ae60; color: #27ae60; }
+    .sub-translate-btn:hover { background: #27ae60; color: #fff; }
+    .sub-translate-progress {
+      padding: 6px 16px; background: #f0fff4; border-bottom: 1px solid #d4edda;
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .sub-translate-progress.hidden { display: none; }
+    .sub-translate-bar {
+      flex: 1; height: 8px; background: #d4edda; border-radius: 4px; overflow: hidden;
+    }
+    .sub-translate-bar > div {
+      height: 100%; background: #27ae60; border-radius: 4px;
+      transition: width 0.3s;
+    }
+    #subTranslateLabel { font-size: 0.78rem; color: #27ae60; white-space: nowrap; }
+    .sub-counter { font-size: 0.78rem; color: #888; margin-left: auto; }
+
+    .sub-list {
+      overflow-y: auto; flex: 1; padding: 8px 0;
+    }
+    .sub-row {
+      display: grid; grid-template-columns: 36px 1fr auto;
+      gap: 0 10px; align-items: start;
+      padding: 8px 16px; border-bottom: 1px solid #f0f2f5;
+      cursor: pointer; transition: background 0.12s;
+    }
+    .sub-row:hover { background: #f8f0ff; }
+    .sub-row.active { background: #f0e6ff; border-left: 3px solid #8e44ad; }
+
+    .sub-num { font-size: 0.72rem; color: #aaa; font-weight: 600; padding-top: 3px; }
+    .sub-texts { display: flex; flex-direction: column; gap: 3px; }
+    .sub-en { font-size: 0.9rem; font-weight: 600; color: #1a2740; line-height: 1.4; }
+    .sub-ru { font-size: 0.82rem; color: #666; line-height: 1.4; }
+    .sub-speak-btn {
+      background: #f0e6ff; border: none; border-radius: 50%;
+      width: 32px; height: 32px; font-size: 0.95rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s; flex-shrink: 0; margin-top: 2px;
+    }
+    .sub-speak-btn:hover { background: #d9b8ff; }
+    .sub-speak-btn.speaking { background: #8e44ad; color: #fff; }
+
+    /* ─── MODAL ACTIVE: blur background & block scroll ─── */
+    body.modal-open {
+      overflow: hidden;
+    }
+    body.modal-open header,
+    body.modal-open .alpha-nav,
+    body.modal-open .container {
+      filter: blur(4px);
+      pointer-events: none;
+      user-select: none;
+      transition: filter 0.2s;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+      .col-ru.hidden {
+        color: #5e6677;
+        text-shadow: 0 0 8px #5e6677;
+      }
+      .col-ru.hidden.revealed-mobile {
+        text-shadow: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 10px 10px;
+        gap: 8px;
+      }
+
+      header h1 {
+        width: 100%;
+        font-size: 1rem;
+      }
+
+      .controls {
+        width: 100%;
+        margin-left: 0;
+        gap: 8px;
+      }
+
+      .search-wrap {
+        flex: 1 1 100%;
+        max-width: none;
+      }
+
+      .alpha-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 6px 10px;
+        scrollbar-width: none;
+      }
+
+      .alpha-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .container {
+        margin: 12px auto;
+        padding: 0 10px 24px;
+      }
+
+      .letter-header {
+        padding: 6px 10px;
+        font-size: 1.1rem;
+      }
+
+      .word-table tr {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+          'en play'
+          'tr tr'
+          'ru ru';
+        align-items: center;
+      }
+
+      .word-table td {
+        padding: 8px 10px;
+      }
+
+      .col-en {
+        grid-area: en;
+        width: auto;
+        padding-right: 8px;
+        word-break: break-word;
+      }
+
+      .col-tr {
+        grid-area: tr;
+        width: auto;
+        padding-top: 0;
+      }
+
+      .col-ru {
+        grid-area: ru;
+        width: auto;
+        padding-top: 0;
+      }
+
+      .col-play {
+        grid-area: play;
+        width: auto;
+        text-align: right;
+      }
+
+      .play-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .prac-box,
+      .sub-box,
+      .fc-box {
+        width: 100%;
+      }
+
+      .prac-options {
+        grid-template-columns: 1fr;
+      }
+
+      .sub-controls {
+        padding: 8px 10px;
+      }
+
+      .sub-row {
+        grid-template-columns: 28px 1fr auto;
+        padding: 8px 10px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .voice-btn,
+      .toggle-btn,
+      .prac-open-btn,
+      .fc-open-btn,
+      .sub-open-btn,
+      .level-btn,
+      .sub-ctrl-btn {
+        font-size: 0.74rem;
+      }
+
+      .voice-btn,
+      .toggle-btn,
+      .prac-open-btn,
+      .fc-open-btn,
+      .sub-open-btn {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+
+      .word-count {
+        min-width: auto;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📖 English–Russian Dictionary</h1>
+
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input id="searchInput" type="text" placeholder="Search for a word..." oninput="onSearch(this.value)" autocomplete="off" spellcheck="false" />
+    <button id="clearBtn" onclick="clearSearch()" title="Clear">✕</button>
+  </div>
+
+  <button class="prac-open-btn" onclick="openPractice()">📚 Practice</button>
+  <button class="fc-open-btn"   onclick="openCards()">🃏 Cards</button>
+  <button class="sub-open-btn"  onclick="openSubtitles()">🎬 Subtitles</button>
+
+  <div class="level-filter">
+    <button class="level-btn active" onclick="setLevel('all',this)">All</button>
+    <button class="level-btn" onclick="setLevel('A1-A2',this)">A1–A2</button>
+    <button class="level-btn" onclick="setLevel('B1-B2',this)">B1–B2</button>
+    <button class="level-btn" onclick="setLevel('C1',this)">C1+</button>
+  </div>
+
+  <div class="controls">
+    <span class="voice-label">Voice:</span>
+    <div class="voice-group-wrap" id="voiceGroupWrap">
+      <div class="voice-group">
+        <button class="voice-btn active" id="btn-female"  onclick="setVoice('female')">👩 Female</button>
+        <button class="voice-btn"        id="btn-male"    onclick="setVoice('male')">👨 Male</button>
+        <button class="voice-btn"        id="btn-child"   onclick="setVoice('child')">👦 Child</button>
+      </div>
+      <div class="voice-popup hidden" id="voicePopup">
+        <div class="voice-popup-title" id="voicePopupTitle">Choose voice name</div>
+        <div class="voice-name-list" id="voiceNameList"></div>
+      </div>
+    </div>
+    <button class="toggle-btn" id="toggleBtn" onclick="toggleHide()">🙈 Hide Translation</button>
+    <span class="word-count" id="wordCount"></span>
+  </div>
+</header>
+
+<nav class="alpha-nav" id="alphNav"></nav>
+
+<div class="container" id="container"></div>
+
+<script src="words.js"></script>
+
+<!-- ═══════════════════ FLASHCARDS MODAL ═══════════════════ -->
+<div id="cardsModal" class="fc-overlay hidden">
+  <div class="fc-box">
+    <button class="fc-close-btn" onclick="closeCards()" title="Close">✕</button>
+
+    <!-- Setup -->
+    <div id="fcSetup">
+      <div class="fc-title">🃏 Flashcards</div>
+      <div class="fc-subtitle">How many words to study?</div>
+      <div class="fc-count-btns" id="fcCountBtns"></div>
+      <button class="fc-start-btn" id="fcStartBtn" onclick="startCards()" disabled>▶ Start</button>
+    </div>
+
+    <!-- Card view -->
+    <div id="fcMain" class="hidden">
+      <div id="fcCards">
+        <div class="fc-progress-bar"><div class="fc-progress-fill" id="fcProgressFill" style="width:0%"></div></div>
+        <div class="fc-progress-label" id="fcProgressLabel">1 / 10</div>
+
+        <div class="fc-scene" onclick="fcFlip()">
+          <div class="fc-card" id="fcCard">
+            <div class="fc-front">
+              <div class="fc-word-en" id="fcWordEn"></div>
+              <div class="fc-transcription" id="fcTranscription"></div>
+              <button class="fc-speak-btn" id="fcSpeakBtn" onclick="event.stopPropagation();fcSpeak()">🔊</button>
+              <div class="fc-hint">tap card to see translation</div>
+            </div>
+            <div class="fc-back">
+              <div class="fc-word-ru" id="fcWordRu"></div>
+              <div class="fc-hint">tap again to flip back</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fc-nav">
+          <button class="fc-nav-btn" id="fcPrevBtn" onclick="fcPrev()" disabled>← Back</button>
+          <span class="fc-counter" id="fcCounter">1 / 10</span>
+          <button class="fc-nav-btn" id="fcNextBtn" onclick="fcNext()">Next →</button>
+        </div>
+      </div>
+
+      <div id="fcFinish" class="hidden" style="text-align:center;padding:30px 10px">
+        <div style="font-size:3rem;margin-bottom:12px">🎉</div>
+        <div style="font-size:1.3rem;font-weight:700;color:#1a2740;margin-bottom:8px">All cards done!</div>
+        <div id="fcFinishMsg" style="color:#666;margin-bottom:24px"></div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="fc-start-btn" style="max-width:160px" onclick="startCards()">🔄 Again</button>
+          <button class="fc-nav-btn" onclick="openCards()">📋 New set</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ PRACTICE MODAL ═══════════════════ -->
+<div id="pracModal" class="prac-overlay hidden">
+  <div class="prac-box">
+    <button class="prac-close-btn" onclick="closePractice()" title="Close">✕</button>
+
+    <!-- Setup -->
+    <div id="pracSetup" class="prac-screen">
+      <div class="prac-title">📚 Word Practice</div>
+      <div class="prac-subtitle" id="pracSetupSub">Select how many words to practice:</div>
+      <div class="prac-count-btns" id="pracCountBtns"></div>
+      <button class="prac-start-btn" id="pracStartBtn" onclick="startPractice()" disabled>▶ Start Practice</button>
+    </div>
+
+    <!-- Quiz (EN→RU and RU→EN) -->
+    <div id="pracQuiz" class="prac-screen hidden">
+      <div class="prac-header-row">
+        <span id="pracBatchInfo"></span>
+        <span id="pracMasteredInfo"></span>
+      </div>
+      <div id="pracRoundBadge" class="prac-round-badge badge-en">🇬🇧 English → Russian</div>
+      <div class="prac-progress-bar">
+        <div class="prac-progress-fill" id="pracProgressFill" style="width:0%"></div>
+      </div>
+      <div class="prac-progress-label" id="pracProgressLabel">1 / 50</div>
+      <div class="prac-question" id="pracQuestion"></div>
+      <div class="prac-options" id="pracOptions"></div>
+      <button class="prac-next-btn" id="pracNextBtn" onclick="nextQuestion()" disabled>Next →</button>
+    </div>
+
+    <!-- Matching (drop-slot design) -->
+    <div id="pracMatch" class="prac-screen hidden">
+      <div class="prac-header-row">
+        <span id="pracMatchBatch"></span>
+        <span id="pracMatchGroup"></span>
+      </div>
+      <div class="prac-round-badge badge-match" style="margin-bottom:10px">🔗 Matching</div>
+      <div class="prac-progress-bar" style="margin-bottom:14px">
+        <div class="prac-progress-fill" id="pracMatchProgressFill" style="width:0%"></div>
+      </div>
+      <!-- Study phase -->
+      <div id="matchStudyArea">
+        <div class="match-study-grid" id="matchStudyGrid"></div>
+        <div class="match-hint">📖 Study the pairs above, then press Start ↓</div>
+        <button class="match-begin-btn" onclick="matchStartPlay()">▶ Start!</button>
+      </div>
+      <!-- Play phase -->
+      <div id="matchPlayArea" style="display:none">
+        <div class="match-slots-row" id="matchSlotsRow"></div>
+        <div class="match-bottom-area" id="matchBottomArea"></div>
+      </div>
+    </div>
+
+    <!-- Batch result -->
+    <div id="pracBatchResult" class="prac-screen hidden">
+      <div class="prac-result-box" id="pracBatchResultBox"></div>
+      <div class="prac-result-actions">
+        <button class="prac-btn-primary" onclick="continueAfterBatch()">Continue →</button>
+        <button class="prac-btn-secondary" onclick="closePractice()">Exit</button>
+      </div>
+    </div>
+
+    <!-- Final -->
+    <div id="pracFinal" class="prac-screen hidden">
+      <div class="prac-result-box" id="pracFinalBox"></div>
+      <div class="prac-result-actions">
+        <button class="prac-btn-primary" onclick="restartPractice()">New Session</button>
+        <button class="prac-btn-secondary" onclick="closePractice()">Close</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ SUBTITLES MODAL ═══════════════════ -->
+<div id="subModal" class="sub-overlay hidden">
+  <div class="sub-box">
+
+    <div class="sub-header">
+      <span class="sub-title">🎬 Subtitles Player</span>
+      <button class="sub-close-btn" onclick="closeSubtitles()" title="Close">✕</button>
+    </div>
+
+    <!-- Paste screen -->
+    <div id="subInputScreen" class="sub-input-wrap">
+      <div class="sub-hint">Paste text or choose a <strong>.txt</strong> subtitle file (format: <code>1. English sentence</code> / translation)</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <label class="sub-file-btn">📂 Choose file
+          <input type="file" accept=".txt" id="subFileInput" style="display:none" onchange="subLoadFile(this)">
+        </label>
+        <span id="subFileName" style="font-size:0.8rem;color:#888;"></span>
+      </div>
+      <textarea id="subTextarea" placeholder="Or paste text here..."></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span id="subErrMsg" style="font-size:0.8rem;color:#e74c3c;"></span>
+        <button class="sub-load-btn" onclick="parseSubtitles()">▶ Load</button>
+      </div>
+    </div>
+
+    <!-- Player screen -->
+    <div id="subPlayerScreen" class="sub-player-wrap hidden">
+      <div class="sub-controls">
+        <button class="sub-ctrl-btn" id="subAutoBtn" onclick="toggleSubAutoPlay()">&#9654; Auto Play</button>
+        <button class="sub-ctrl-btn" onclick="subPrev()">&#9194; Prev</button>
+        <button class="sub-ctrl-btn" onclick="subNext()">Next &#9193;</button>
+        <button class="sub-ctrl-btn sub-translate-btn" id="subTranslateBtn" onclick="translateAll()">&#127758; Translate</button>
+        <button class="sub-ctrl-btn danger" onclick="showSubInput()">&#128203; New text</button>
+        <span class="sub-counter" id="subCounter"></span>
+      </div>
+      <div id="subTranslateProgress" class="sub-translate-progress hidden">
+        <div class="sub-translate-bar"><div id="subTranslateFill" style="width:0%"></div></div>
+        <span id="subTranslateLabel">Translating 0 / 0...</span>
+      </div>
+      <div class="sub-list" id="subList"></div>
+    </div>
+
+  </div>
+</div>
+<script>
+
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let hideMode      = false;
+let selectedVoice = 'female';
+let selectedVoiceName = '';
+const selectedVoiceByType = { female: '', male: '', child: '' };
+let voicePopupOpen = false;
+
+const BLOCKED_VOICE_RE = /elizabeth/i;
+const WORKING_FEMALE_RE = /\baria\b|\bava\b|\bzira\b|\bemma\b|\bmichelle\b/i;
+const BLOCKED_MALE_RE = /\badam\b|\bbrandon\b|\bchristopher\b|\bdavid\b|\bderek\b|\bdustin\b|\bjacob\b|\bjason\b|\bkai\b|\blewis\b|\bsamuel\b|\bstefan\b|\bsteffan\b|\btony\b|\bryan\b|\bdavis\b/i;
+
+const FEMALE_RE = /aria|jenny|michelle|sonia|libby|maisie|abbi|bella|hollie|leah|lily|mia|natasha|olivia|ava|samantha|zira|hazel|susan|victoria|karen|linda|emma|emily|natalie|amanda|amber|ashley|cora|evelyn|jane|lola|luna|monica|nancy|phoebe|sara|serena|tiana/i;
+const MALE_RE   = /guy|ryan|davis|tony|jason|brandon|eric|steffan|roger|david|mark|james|richard|charles|george|thomas|liam|adam|alex|andrew|daniel|john|michael|william|brian|christopher|derek|dustin|jacob|kai|lewis|samuel|tyler/i;
+const CHILD_RE  = /\bana\b|child|kid/i;
+
+/* ════════════════════════════════════════════════
+   SPEECH SYNTHESIS
+════════════════════════════════════════════════ */
+let synthVoices = [];
+function getSynthVoices() {
+  return synthVoices.length ? synthVoices : window.speechSynthesis.getVoices();
+}
+
+function voiceRank(name) {
+  const femalePriority = ['jenny', 'aria', 'sonia', 'olivia', 'ava', 'samantha', 'zira', 'hazel', 'susan', 'victoria', 'karen', 'linda', 'emma', 'emily', 'natalie'];
+  const lower = String(name || '').toLowerCase();
+  const idx = femalePriority.findIndex(part => lower.includes(part));
+  return idx === -1 ? 999 : idx;
+}
+
+function bestVoiceFor(type) {
+  return pickVoice(type) || null;
+}
+
+function getVoicePool() {
+  const all = getSynthVoices();
+  const enUS  = all.filter(v => v.lang === 'en-US' || v.lang === 'en_US');
+  const enAny = all.filter(v => String(v.lang || '').startsWith('en'));
+  const pool = enUS.length ? enUS : (enAny.length ? enAny : all);
+  return pool.filter(v => !BLOCKED_VOICE_RE.test(v.name));
+}
+
+function shortVoiceName(fullName) {
+  const clean = String(fullName || '').replace(/^Microsoft\s+/i, '').split(' - ')[0].trim();
+  const first = clean.split(/\s+/)[0] || clean || 'Voice';
+  return first;
+}
+
+function getVoicesForType(type) {
+  const pool = getVoicePool();
+  let list = [];
+
+  if (type === 'female') {
+    list = pool.filter(v => WORKING_FEMALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
+  } else if (type === 'male') {
+    list = pool.filter(v => MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+  } else {
+    list = pool.filter(v => CHILD_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
+  }
+
+  if (!list.length) list = pool;
+
+  const sorted = [...list].sort((a, b) => {
+    const ra = voiceRank(a.name);
+    const rb = voiceRank(b.name);
+    if (ra !== rb) return ra - rb;
+    return a.name.localeCompare(b.name);
+  });
+
+  const unique = [];
+  const seen = new Set();
+  for (const v of sorted) {
+    const key = shortVoiceName(v.name).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(v);
+  }
+  return unique;
+}
+
+function syncVoiceNameList() {
+  const listEl = document.getElementById('voiceNameList');
+  if (!listEl) return;
+
+  const voices = getVoicesForType(selectedVoice).slice(0, 16);
+  const selectedInList = voices.some(v => v.name === selectedVoiceName);
+
+  let renderList = voices;
+  if (selectedVoiceName && !selectedInList) {
+    const all = getVoicePool();
+    const selected = all.find(v => v.name === selectedVoiceName);
+    if (selected) renderList = [selected, ...voices].slice(0, 16);
+  }
+
+  listEl.innerHTML = renderList.map(v => {
+    const active = v.name === selectedVoiceName ? ' active' : '';
+    const label = shortVoiceName(v.name).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const title = v.name.replace(/"/g, '&quot;');
+    const escapedName = v.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return `<button class="voice-name-btn${active}" title="${title}" onclick="setVoiceByName('${escapedName}')">${label}</button>`;
+  }).join('');
+
+  if (!selectedVoiceName && renderList[0]) {
+    selectedVoiceName = renderList[0].name;
+    syncVoiceNameList();
+  }
+}
+
+function openVoicePopup() {
+  const popup = document.getElementById('voicePopup');
+  const title = document.getElementById('voicePopupTitle');
+  if (!popup || !title) return;
+
+  const modeTitle = selectedVoice === 'female' ? 'Female voice names' : (selectedVoice === 'male' ? 'Male voice names' : 'Child voice names');
+  title.textContent = modeTitle;
+  popup.classList.remove('hidden');
+  voicePopupOpen = true;
+}
+
+function closeVoicePopup() {
+  const popup = document.getElementById('voicePopup');
+  if (!popup) return;
+  popup.classList.add('hidden');
+  voicePopupOpen = false;
+}
+
+window.speechSynthesis.onvoiceschanged = () => {
+  synthVoices = window.speechSynthesis.getVoices();
+  if (!selectedVoiceName) {
+    const saved = selectedVoiceByType[selectedVoice];
+    if (saved) {
+      selectedVoiceName = saved;
+    } else {
+      const best = bestVoiceFor(selectedVoice);
+      selectedVoiceName = best ? best.name : '';
+      selectedVoiceByType[selectedVoice] = selectedVoiceName;
+    }
+  }
+  syncVoiceNameList();
+};
+setTimeout(() => {
+  synthVoices = window.speechSynthesis.getVoices();
+  if (!selectedVoiceName) {
+    const saved = selectedVoiceByType[selectedVoice];
+    if (saved) {
+      selectedVoiceName = saved;
+    } else {
+      const best = bestVoiceFor(selectedVoice);
+      selectedVoiceName = best ? best.name : '';
+      selectedVoiceByType[selectedVoice] = selectedVoiceName;
+    }
+  }
+  syncVoiceNameList();
+}, 500);
+
+function pickVoice(type) {
+  const pool  = getVoicePool();
+
+  const neural = pool.filter(v => !v.localService);  // online/neural (Edge)
+  const local  = pool.filter(v =>  v.localService);  // offline/local (Chrome/Windows)
+
+  const pick = (list, re) => list.find(v => re.test(v.name));
+  const notFemale = list => list.find(v => !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
+
+  if (type === 'female') {
+    return pick(neural, WORKING_FEMALE_RE)
+        || pick(local, WORKING_FEMALE_RE)
+        || pick(neural, FEMALE_RE)
+        || pick(local, FEMALE_RE)
+        || neural[0] || local[0] || pool[0];
+  }
+  if (type === 'male') {
+    const maleNeural = neural.filter(v => !BLOCKED_MALE_RE.test(v.name));
+    const maleLocal = local.filter(v => !BLOCKED_MALE_RE.test(v.name));
+    return pick(maleNeural, MALE_RE) || pick(maleLocal, MALE_RE)
+        || notFemale(neural) || notFemale(local)   // last resort: any non-female voice
+        || pool[0];
+  }
+  // child (~10 yo): prefer Microsoft Ana (real child voice), then female fast
+  return pick(pool, CHILD_RE)
+      || pick(neural, FEMALE_RE)
+      || pick(local, FEMALE_RE)
+      || local[0] || pool[0];
+}
+
+function resolveVoice() {
+  const all = getSynthVoices();
+  if (selectedVoiceName) {
+    const exact = all.find(v => v.name === selectedVoiceName);
+    if (exact) return exact;
+
+    const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const wanted = norm(selectedVoiceName);
+    if (wanted) {
+      const near = all.find(v => {
+        const n = norm(v.name);
+        return n.includes(wanted) || wanted.includes(n);
+      });
+      if (near) return near;
+    }
+  }
+  return bestVoiceFor(selectedVoice);
+}
+
+function clampNum(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function syncViewportHeight() {
+  const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  document.documentElement.style.setProperty('--app-vh', `${h * 0.01}px`);
+}
+
+function syncStickyOffsets() {
+  const header = document.querySelector('header');
+  const alpha = document.getElementById('alphNav');
+
+  const headerH = header ? Math.ceil(header.getBoundingClientRect().height) : 53;
+  let alphaH = 0;
+  if (alpha) {
+    const hasLinks = alpha.children.length > 0;
+    alphaH = hasLinks ? Math.ceil(alpha.getBoundingClientRect().height) : 0;
+  }
+
+  document.documentElement.style.setProperty('--header-h', `${headerH}px`);
+  document.documentElement.style.setProperty('--alpha-h', `${alphaH}px`);
+}
+
+window.addEventListener('resize', () => {
+  syncViewportHeight();
+  syncStickyOffsets();
+});
+
+window.addEventListener('orientationchange', () => {
+  syncViewportHeight();
+  syncStickyOffsets();
+});
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    syncViewportHeight();
+    syncStickyOffsets();
+  });
+}
+
+document.addEventListener('click', (ev) => {
+  const cell = ev.target.closest('.col-ru.hidden');
+  if (!cell) return;
+  cell.classList.toggle('revealed-mobile');
+});
+
+function applyVoiceParams(utt, v, text = '') {
+  const srcText = String(text || '').trim();
+  const words = srcText ? srcText.split(/\s+/).length : 0;
+  const isQuestion = /\?\s*$/.test(srcText);
+  const isExclaim  = /!\s*$/.test(srcText);
+  const hasPausePunct = /[,;:]/.test(srcText);
+
+  const isNeural = v && !v.localService;
+  if (selectedVoice === 'child') {
+    const isRealChild = v && /\bana\b|child|kid/i.test(v.name);
+    utt.pitch = isRealChild ? 1.0 : 1.5;
+    utt.rate  = isRealChild ? 1.05 : 1.3;
+  } else if (selectedVoice === 'female') {
+    utt.pitch = isNeural ? 1.0 : 1.1;
+    utt.rate  = 0.92;
+  } else {
+    utt.pitch = isNeural ? 1.0 : 0.82;
+    utt.rate  = 0.92;
+  }
+
+  // Add light expressive prosody so speech sounds less robotic.
+  if (isQuestion) { utt.pitch += 0.08; utt.rate += 0.03; }
+  if (isExclaim)  { utt.pitch += 0.12; utt.rate += 0.05; }
+  if (hasPausePunct) utt.rate -= 0.03;
+  if (words > 0 && words <= 2) utt.pitch += 0.03;
+
+  // Subtle natural variation per utterance.
+  utt.pitch += (Math.random() - 0.5) * 0.06;
+  utt.rate  += (Math.random() - 0.5) * 0.04;
+
+  utt.pitch = clampNum(utt.pitch, 0.75, 1.75);
+  utt.rate  = clampNum(utt.rate, 0.78, 1.35);
+}
+
+function speak(word) {
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+
+  const mustCancel = synth.speaking || synth.pending;
+  if (mustCancel) synth.cancel();
+
+  const utt = new SpeechSynthesisUtterance(word);
+  utt.lang = 'en-US';
+
+  const v = resolveVoice();
+  if (v) utt.voice = v;
+  applyVoiceParams(utt, v, word);
+
+  if (mustCancel) {
+    setTimeout(() => synth.speak(utt), 35);
+  } else {
+    synth.speak(utt);
+  }
+}
+
+/* ════════════════════════════════════════════════
+   UI CONTROLS
+════════════════════════════════════════════════ */
+function setVoice(type) {
+  selectedVoice = type;
+  const saved = selectedVoiceByType[type];
+  if (saved) {
+    selectedVoiceName = saved;
+  } else {
+    const best = bestVoiceFor(type);
+    selectedVoiceName = best ? best.name : '';
+    selectedVoiceByType[type] = selectedVoiceName;
+  }
+  document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + type).classList.add('active');
+  syncVoiceNameList();
+  openVoicePopup();
+}
+
+function setVoiceByName(name) {
+  selectedVoiceName = name || '';
+  selectedVoiceByType[selectedVoice] = selectedVoiceName;
+  if (selectedVoiceName && !resolveVoice()) {
+    const first = getVoicesForType(selectedVoice)[0];
+    selectedVoiceName = first ? first.name : '';
+    selectedVoiceByType[selectedVoice] = selectedVoiceName;
+  }
+  syncVoiceNameList();
+  closeVoicePopup();
+}
+
+document.addEventListener('click', (ev) => {
+  if (!voicePopupOpen) return;
+  const wrap = document.getElementById('voiceGroupWrap');
+  if (wrap && !wrap.contains(ev.target)) closeVoicePopup();
+});
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape') closeVoicePopup();
+});
+
+function toggleHide() {
+  hideMode = !hideMode;
+  const btn   = document.getElementById('toggleBtn');
+  const cells = document.querySelectorAll('.col-ru');
+
+  if (hideMode) {
+    btn.textContent = '👁️ Show Translation';
+    btn.classList.add('show-mode');
+    cells.forEach(c => c.classList.add('hidden'));
+  } else {
+    btn.textContent = '🙈 Hide Translation';
+    btn.classList.remove('show-mode');
+    cells.forEach(c => c.classList.remove('hidden'));
+  }
+}
+
+/* ════════════════════════════════════════════════
+   RENDER
+════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════
+   LEVEL FILTER
+════════════════════════════════════════════════ */
+let activeLevel = 'all';
+
+function getWords() {
+  if (activeLevel === 'all') return WORDS;
+  if (activeLevel === 'A1-A2') return WORDS.filter(w => w.l === 'A1' || w.l === 'A2');
+  if (activeLevel === 'B1-B2') return WORDS.filter(w => w.l === 'B1' || w.l === 'B2');
+  if (activeLevel === 'C1') return WORDS.filter(w => w.l === 'C1' || !w.l);
+  return WORDS;
+}
+
+function setLevel(level, btn) {
+  activeLevel = level;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const q = document.getElementById('searchInput').value;
+  if (q.trim()) { onSearch(q); } else { render(); }
+}
+
+function render() {
+  /* Group by first letter */
+  const grouped = {};
+  const wordList = getWords();
+  wordList.forEach(w => {
+    const L = w.w[0].toUpperCase();
+    (grouped[L] = grouped[L] || []).push(w);
+  });
+  const letters = Object.keys(grouped).sort();
+
+  /* Alphabet nav */
+  document.getElementById('alphNav').innerHTML =
+    letters.map(L => `<a class="alpha-link" href="#letter-${L}">${L}</a>`).join('');
+
+  /* Word count */
+  document.getElementById('wordCount').textContent = `${wordList.length} words`;
+
+  /* Rows */
+  document.getElementById('container').innerHTML = letters.map(L => `
+    <div class="letter-group" id="letter-${L}">
+      <div class="letter-header">${L}</div>
+      <table class="word-table">
+        ${grouped[L].map(w => `
+          <tr>
+            <td class="col-en">${w.w}</td>
+            <td class="col-tr">${w.t}</td>
+            <td class="col-ru${hideMode ? ' hidden' : ''}" data-ru="${w.r.replace(/"/g,'&quot;')}">${w.r}</td>
+            <td class="col-play">
+              <button class="play-btn" onclick="speak('${w.w.replace(/'/g,"\\'")}')">&#9654;</button>
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  `).join('');
+
+  syncStickyOffsets();
+}
+
+syncViewportHeight();
+render();
+
+/* ════════════════════════════════════════════════
+   SEARCH
+════════════════════════════════════════════════ */
+function onSearch(query) {
+  const clearBtn = document.getElementById('clearBtn');
+  clearBtn.style.display = query ? 'block' : 'none';
+
+  const q = query.trim().toLowerCase();
+  if (!q) { render(); return; }
+
+  const matched = getWords().filter(w =>
+    w.w.toLowerCase().includes(q) ||
+    w.r.toLowerCase().includes(q)
+  );
+
+  if (matched.length === 0) {
+    document.getElementById('alphNav').innerHTML = '';
+    document.getElementById('container').innerHTML =
+      '<div class="no-results">No results found for «' + query + '»</div>';
+    syncStickyOffsets();
+    return;
+  }
+
+  // hide alphabet nav during search
+  document.getElementById('alphNav').innerHTML = '';
+
+  const rows = matched.map(w => `
+    <tr>
+      <td class="col-en">${highlight(w.w, q)}</td>
+      <td class="col-tr">${w.t}</td>
+      <td class="col-ru${hideMode ? ' hidden' : ''}" data-ru="${w.r.replace(/"/g,'&quot;')}">${highlight(w.r, q)}</td>
+      <td class="col-play">
+        <button class="play-btn" onclick="speak('${w.w.replace(/'/g,"\\'")}')">&#9654;</button>
+      </td>
+    </tr>
+  `).join('');
+
+  document.getElementById('wordCount').textContent = `${matched.length} words`;
+  document.getElementById('container').innerHTML = `
+    <div class="letter-group">
+      <div class="letter-header">Results: ${matched.length}</div>
+      <table class="word-table">${rows}</table>
+    </div>`;
+
+  syncStickyOffsets();
+}
+
+function highlight(text, q) {
+  if (!q) return text;
+  const re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return text.replace(re, '<mark style="background:#fff176;border-radius:2px">$1</mark>');
+}
+
+function clearSearch() {
+  const input = document.getElementById('searchInput');
+  input.value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+  input.focus();
+  render();
+}
+
+/* ════════════════════════════════════════════════
+   PRACTICE MODULE
+════════════════════════════════════════════════ */
+
+const ROUND_INFO = {
+  'listen': { label: '🔊 Listen & Identify', badge: 'badge-listen' },
+  'en-ru':  { label: '🇬🇧 English → Russian',  badge: 'badge-en'    },
+  'ru-en':  { label: '🇷🇺 Russian → English',  badge: 'badge-ru'    },
+  'match':  { label: '🔗 Matching',             badge: 'badge-match' },
+};
+
+const P = {
+  pool: [],
+  batches: [],
+  batchIdx: 0,
+  // Per-batch round order (shuffled each batch)
+  rounds: [],
+  roundIdx: 0,
+  qIdx: 0,
+  totalSelected: 0,
+  selectedCount: 0,
+  // Quiz
+  currentWord: null,
+  opts: [],
+  answered: false,
+  // Matching
+  mGroups: [],
+  mIdx: 0,
+  mWords: [],
+  mSelected: null,
+  mPlaced: [],
+  mAvailable: [],
+};
+
+function pracShuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escH(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Open / Close ── */
+function openPractice() {
+  document.body.classList.add('modal-open');
+  document.getElementById('pracModal').classList.remove('hidden');
+  initPracSetup();
+}
+function closePractice() {
+  document.body.classList.remove('modal-open');
+  document.getElementById('pracModal').classList.add('hidden');
+  if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+}
+function restartPractice() { initPracSetup(); }
+
+/* ── Setup ── */
+function initPracSetup() {
+  pracShowScreen('pracSetup');
+  const avail = getWords().length;
+  const bases = [10, 20, 50, 100, 150];
+  const counts = bases.filter(c => c <= avail);
+  if (!counts.length || counts[counts.length - 1] < avail) counts.push(avail);
+  P.selectedCount = 0;
+  document.getElementById('pracStartBtn').disabled = true;
+  document.getElementById('pracSetupSub').textContent =
+    `Select how many words to practice (${avail} available):`;
+  document.getElementById('pracCountBtns').innerHTML = counts.map(c => {
+    const label = (c === avail && !bases.includes(c)) ? `All (${c})` : c;
+    return `<button class="prac-count-btn" onclick="pracSelectCount(${c},this)">${label}</button>`;
+  }).join('');
+}
+
+function pracSelectCount(n, btn) {
+  document.querySelectorAll('.prac-count-btn').forEach(b => b.classList.remove('prac-active'));
+  btn.classList.add('prac-active');
+  P.selectedCount = n;
+  document.getElementById('pracStartBtn').disabled = false;
+}
+
+function startPractice() {
+  const n = P.selectedCount;
+  if (!n) return;
+  P.pool = pracShuffle(getWords()).slice(0, n).map(w => ({...w, correct: 0}));
+  P.totalSelected = n;
+  buildPracBatches();
+  P.batchIdx = 0;
+  startBatch();
+}
+
+function startBatch() {
+  // Each batch gets a freshly shuffled round order
+  P.rounds = pracShuffle(['listen','en-ru','ru-en','match']);
+  P.roundIdx = 0;
+  P.qIdx = 0;
+  startRound();
+}
+
+function startRound() {
+  if (P.roundIdx >= P.rounds.length) { finishBatch(); return; }
+  P.qIdx = 0;
+  const rt = P.rounds[P.roundIdx];
+  if (rt === 'match') startMatching();
+  else showQuizQ();
+}
+
+function buildPracBatches() {
+  const idx = pracShuffle([...Array(P.pool.length).keys()]);
+  P.batches = [];
+  for (let i = 0; i < idx.length; i += 50) {
+    P.batches.push(idx.slice(i, i + 50));
+  }
+}
+
+function getBatch() {
+  return (P.batches[P.batchIdx] || []).map(i => P.pool[i]);
+}
+
+function pracShowScreen(id) {
+  ['pracSetup','pracQuiz','pracMatch','pracBatchResult','pracFinal'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+/* ── Quiz (listen / en-ru / ru-en) ── */
+function showQuizQ() {
+  const batch = getBatch();
+  if (P.qIdx >= batch.length) { P.roundIdx++; startRound(); return; }
+
+  pracShowScreen('pracQuiz');
+  P.answered = false;
+  const word = batch[P.qIdx];
+  P.currentWord = word;
+  const rt   = P.rounds[P.roundIdx];
+  const info = ROUND_INFO[rt];
+
+  // Header
+  const mastered = P.pool.filter(w => w.correct >= 2).length;
+  const batchEl = document.getElementById('pracBatchInfo');
+  batchEl.textContent = `Set ${P.batchIdx+1}/${P.batches.length} · Round ${P.roundIdx+1}/4`;
+  batchEl.title = `Set — a group of up to 50 words (${getBatch().length} words now).\nRound — exercise type: listening, eng→rus, rus→eng, matching.`;
+  document.getElementById('pracMasteredInfo').textContent = `✅ mastered: ${mastered}`;
+
+  // Badge
+  const badge = document.getElementById('pracRoundBadge');
+  badge.textContent = info.label;
+  badge.className   = 'prac-round-badge ' + info.badge;
+
+  // Progress
+  const pct = Math.round(P.qIdx / batch.length * 100);
+  document.getElementById('pracProgressFill').style.width = pct + '%';
+  document.getElementById('pracProgressLabel').textContent = `${P.qIdx+1} / ${batch.length}`;
+
+  // Question
+  const qDiv = document.getElementById('pracQuestion');
+
+  if (rt === 'listen') {
+    qDiv.innerHTML = `<button class="prac-listen-icon" onclick="speakCurrentWord()" title="Listen again">🔊</button>`;
+    speak(word.w);
+  } else if (rt === 'en-ru') {
+    qDiv.innerHTML =
+      `<span class="prac-word-en">${escH(word.w)}</span>` +
+      `<button class="prac-speak-inline" onclick="speakCurrentWord()" title="Speak">🔊</button>` +
+      `<span class="prac-word-tr">${escH(word.t)}</span>`;
+  } else {                               // ru-en
+    qDiv.innerHTML = `<span class="prac-word-ru">${escH(word.r)}</span>`;
+  }
+
+  // Options
+  const wrongs = pracShuffle(P.pool.filter(w => w.w !== word.w)).slice(0, 3);
+  P.opts = pracShuffle([word, ...wrongs]);
+  document.getElementById('pracOptions').innerHTML = P.opts.map((opt, i) => {
+    // listen & ru-en → EN options;  en-ru → RU options
+    const label = (rt === 'en-ru') ? escH(opt.r) : escH(opt.w);
+    return `<button class="prac-option" onclick="pracSelectAnswer(${i})">${label}</button>`;
+  }).join('');
+
+  document.getElementById('pracNextBtn').disabled = true;
+}
+
+function speakCurrentWord() {
+  if (P.currentWord) speak(P.currentWord.w);
+}
+
+function pracSelectAnswer(idx) {
+  if (P.answered) return;
+  P.answered = true;
+  const rt   = P.rounds[P.roundIdx];
+  const isOk = (P.opts[idx].w === P.currentWord.w);
+
+  document.querySelectorAll('.prac-option').forEach((btn, i) => {
+    btn.disabled = true;
+    if (P.opts[i].w === P.currentWord.w) btn.classList.add('opt-correct');
+    else if (i === idx)                   btn.classList.add('opt-wrong');
+  });
+
+  if (isOk) {
+    P.currentWord.correct++;
+    if (rt === 'listen') {
+      // Reveal the word after correct listen answer
+      document.getElementById('pracQuestion').innerHTML =
+        `<span class="prac-word-en">${escH(P.currentWord.w)}</span>` +
+        `<span class="prac-word-tr">${escH(P.currentWord.t)}</span>`;
+    } else if (rt === 'ru-en') {
+      setTimeout(() => speak(P.currentWord.w), 400);
+    }
+  } else {
+    if (rt === 'listen') {
+      setTimeout(() => {
+        document.getElementById('pracQuestion').innerHTML =
+          `<span class="prac-word-en">${escH(P.currentWord.w)}</span>` +
+          `<span class="prac-word-tr">${escH(P.currentWord.t)}</span>`;
+        speak(P.currentWord.w);
+      }, 300);
+    }
+  }
+  document.getElementById('pracNextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  P.qIdx++;
+  showQuizQ();
+}
+
+/* ── Matching (study → drop-slot) ── */
+function startMatching() {
+  pracShowScreen('pracMatch');
+  const batch = getBatch();
+  P.mGroups = [];
+  const shuffled = pracShuffle(batch);
+  for (let i = 0; i < shuffled.length; i += 5) P.mGroups.push(shuffled.slice(i, i + 5));
+  P.mIdx = 0;
+  renderMatchGroup();
+}
+
+function renderMatchGroup() {
+  if (P.mIdx >= P.mGroups.length) { P.roundIdx++; startRound(); return; }
+  P.mWords     = P.mGroups[P.mIdx];
+  P.mSelected  = null;
+  P.mPlaced    = new Array(P.mWords.length).fill(null);
+  P.mAvailable = pracShuffle(P.mWords.map((w, i) => ({word: w, origIdx: i})));
+
+  const matchBatchEl = document.getElementById('pracMatchBatch');
+  matchBatchEl.textContent = `Set ${P.batchIdx+1}/${P.batches.length} · Round ${P.roundIdx+1}/4`;
+  matchBatchEl.title = `Set — a group of up to 50 words.\nRound — exercise type: listening, eng→rus, rus→eng, matching.`;
+  const matchGroupEl = document.getElementById('pracMatchGroup');
+  matchGroupEl.textContent = `Group ${P.mIdx+1}/${P.mGroups.length} (5 words each)`;
+  matchGroupEl.title = 'Each group has 5 word pairs. Study them first, then match.';
+  const pct = Math.round(P.mIdx / P.mGroups.length * 100);
+  document.getElementById('pracMatchProgressFill').style.width = pct + '%';
+
+  // Study grid
+  document.getElementById('matchStudyGrid').innerHTML = P.mWords.map(w => `
+    <div class="match-study-card">
+      <div class="match-study-en">${escH(w.w)}<button class="match-study-speak" onclick="speak('${w.w.replace(/'/g,"\\'")}')">🔊</button></div>
+      <div class="match-study-ru">${escH(w.r)}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('matchStudyArea').style.display = '';
+  document.getElementById('matchPlayArea').style.display = 'none';
+}
+
+function matchStartPlay() {
+  document.getElementById('matchStudyArea').style.display = 'none';
+  document.getElementById('matchPlayArea').style.display = '';
+
+  // Top: EN word labels + empty slots below each
+  document.getElementById('matchSlotsRow').innerHTML = P.mWords.map((w, i) => `
+    <div class="match-slot-card">
+      <div class="match-slot-en" onclick="speak('${w.w.replace(/'/g,"\\'")}')">🔊 ${escH(w.w)}</div>
+      <div class="match-slot-box" id="mslot${i}"
+        onclick="matchSelectSlot(${i})"
+        ondragover="matchDragOver(event,${i})"
+        ondragleave="matchDragLeave(event)"
+        ondrop="matchDrop(event,${i})">?</div>
+    </div>
+  `).join('');
+
+  // Bottom: shuffled Russian translations
+  renderMatchBottom();
+}
+
+function renderMatchBottom() {
+  document.getElementById('matchBottomArea').innerHTML = P.mAvailable.map((item, i) => {
+    if (!item) return '';
+    return `<button class="match-bottom-btn" id="mbtn${i}"
+      draggable="true"
+      onclick="matchSelectBottom(${i})"
+      ondragstart="matchDragStart(event,${i})"
+      ondragend="matchDragEnd(event)">${escH(item.word.r)}</button>`;
+  }).join('');
+}
+
+function matchDragStart(e, i) {
+  e.dataTransfer.setData('text/plain', String(i));
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const b = document.getElementById('mbtn'+i); if(b) b.classList.add('dragging'); }, 0);
+  P.mSelected = i;
+  document.querySelectorAll('.match-bottom-btn').forEach(b => b.classList.remove('mbsel'));
+  document.getElementById('mbtn'+i)?.classList.add('mbsel');
+}
+function matchDragEnd(e) {
+  document.querySelectorAll('.match-bottom-btn').forEach(b => b.classList.remove('dragging'));
+  document.querySelectorAll('.match-slot-box').forEach(b => b.classList.remove('drag-over'));
+}
+function matchDragOver(e, slotIdx) {
+  if (P.mPlaced[slotIdx] !== null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function matchDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function matchDrop(e, slotIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const i = parseInt(e.dataTransfer.getData('text/plain'));
+  if (!isNaN(i)) { P.mSelected = i; matchSelectSlot(slotIdx); }
+}
+
+function matchSelectBottom(i) {
+  if (!P.mAvailable[i]) return;
+  document.querySelectorAll('.match-bottom-btn').forEach(b => b.classList.remove('mbsel'));
+  P.mSelected = i;
+  document.getElementById('mbtn' + i).classList.add('mbsel');
+}
+
+function matchSelectSlot(slotIdx) {
+  if (P.mPlaced[slotIdx] !== null) return;
+  if (P.mSelected === null) {
+    // Hint: shake the slot
+    const el = document.getElementById('mslot' + slotIdx);
+    el.classList.add('mslot-fail');
+    setTimeout(() => el.classList.remove('mslot-fail'), 400);
+    return;
+  }
+  const item   = P.mAvailable[P.mSelected];
+  if (!item) return;
+  const slotEl = document.getElementById('mslot' + slotIdx);
+
+  if (item.origIdx === slotIdx) {
+    // Correct!
+    P.mPlaced[slotIdx] = item;
+    P.mAvailable[P.mSelected] = null;
+    slotEl.textContent = item.word.r;
+    slotEl.classList.add('mslot-filled');
+    slotEl.onclick = null;
+    speak(item.word.w);
+    const btn = document.getElementById('mbtn' + P.mSelected);
+    if (btn) btn.style.display = 'none';
+    P.mSelected = null;
+    if (P.mPlaced.every(x => x !== null)) {
+      setTimeout(() => { P.mIdx++; renderMatchGroup(); }, 800);
+    }
+  } else {
+    // Wrong!
+    slotEl.classList.add('mslot-fail');
+    setTimeout(() => {
+      slotEl.classList.remove('mslot-fail');
+      document.querySelectorAll('.match-bottom-btn').forEach(b => b.classList.remove('mbsel'));
+      P.mSelected = null;
+    }, 500);
+  }
+}
+
+/* ── Batch result ── */
+function finishBatch() {
+  const batch         = getBatch();
+  const batchMastered = batch.filter(w => w.correct >= 2).length;
+  const totalMastered = P.pool.filter(w => w.correct >= 2).length;
+  const remaining     = P.pool.length - totalMastered;
+  const isLast        = (P.batchIdx === P.batches.length - 1);
+  const roundOrder    = P.rounds.map(rt => ROUND_INFO[rt].label).join(' → ');
+
+  pracShowScreen('pracBatchResult');
+  document.getElementById('pracBatchResultBox').innerHTML = `
+    <div class="prac-result-emoji">✅</div>
+    <div class="prac-result-title">Batch ${P.batchIdx+1} / ${P.batches.length} Complete</div>
+    <div class="prac-result-rounds">${roundOrder}</div>
+    <div class="prac-result-stat">Mastered in this batch: <strong>${batchMastered}</strong></div>
+    <div class="prac-result-stat">Total mastered: <strong>${totalMastered}</strong> / ${P.totalSelected}</div>
+    <div class="prac-result-stat">Still to learn: <strong>${remaining}</strong></div>
+    ${isLast && remaining > 0 ? '<div class="prac-result-stat" style="color:#8e44ad;margin-top:8px">All batches done — starting new cycle with remaining words.</div>' : ''}
+  `;
+  P.batchIdx++;
+}
+
+function continueAfterBatch() {
+  if (P.batchIdx >= P.batches.length) {
+    P.pool = P.pool.filter(w => w.correct < 2);
+    if (P.pool.length === 0) { showPracFinal(); return; }
+    buildPracBatches();
+    P.batchIdx = 0;
+  }
+  startBatch();
+}
+
+function showPracFinal() {
+  pracShowScreen('pracFinal');
+  document.getElementById('pracFinalBox').innerHTML = `
+    <div class="prac-result-emoji">🎉</div>
+    <div class="prac-result-title">All Words Mastered!</div>
+    <div class="prac-result-stat">You successfully learned all <strong>${P.totalSelected}</strong> words.</div>
+    <div class="prac-result-stat" style="color:#27ae60;font-size:1.05rem;margin-top:10px"><strong>🏆 Excellent work!</strong></div>
+  `;
+}
+
+/* ════════════════════════════════════════════════
+   FLASHCARDS
+════════════════════════════════════════════════ */
+const FC = { pool: [], idx: 0, flipped: false, selectedCount: 0 };
+
+function openCards() {
+  document.body.classList.add('modal-open');
+  document.getElementById('cardsModal').classList.remove('hidden');
+  const counts = [10, 20, 30, 50, 75, 100];
+  document.getElementById('fcCountBtns').innerHTML = counts.map(n =>
+    `<button class="fc-count-btn" onclick="fcSelectCount(${n},this)">${n}</button>`
+  ).join('');
+  document.getElementById('fcStartBtn').disabled = true;
+  FC.selectedCount = 0;
+  document.getElementById('fcSetup').classList.remove('hidden');
+  document.getElementById('fcMain').classList.add('hidden');
+}
+
+function closeCards() {
+  document.body.classList.remove('modal-open');
+  document.getElementById('cardsModal').classList.add('hidden');
+}
+
+function fcSelectCount(n, btn) {
+  FC.selectedCount = Math.min(n, getWords().length);
+  document.querySelectorAll('.fc-count-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('fcStartBtn').disabled = false;
+}
+
+function startCards() {
+  FC.pool = pracShuffle([...getWords()]).slice(0, FC.selectedCount);
+  FC.idx = 0;
+  document.getElementById('fcSetup').classList.add('hidden');
+  document.getElementById('fcMain').classList.remove('hidden');
+  document.getElementById('fcFinish').classList.add('hidden');
+  document.getElementById('fcCards').classList.remove('hidden');
+  fcRender();
+}
+
+function fcRender() {
+  const w = FC.pool[FC.idx];
+  FC.flipped = false;
+  document.getElementById('fcCard').classList.remove('flipped');
+  document.getElementById('fcWordEn').textContent = w.w;
+  document.getElementById('fcTranscription').textContent = w.t || '';
+  document.getElementById('fcWordRu').textContent = w.r;
+  const label = `${FC.idx + 1} / ${FC.pool.length}`;
+  document.getElementById('fcProgressLabel').textContent = label;
+  document.getElementById('fcCounter').textContent = label;
+  document.getElementById('fcProgressFill').style.width = Math.round(FC.idx / FC.pool.length * 100) + '%';
+  document.getElementById('fcPrevBtn').disabled = FC.idx === 0;
+  document.getElementById('fcNextBtn').textContent = FC.idx === FC.pool.length - 1 ? '🏁 Finish' : 'Next →';
+}
+
+function fcFlip() {
+  FC.flipped = !FC.flipped;
+  document.getElementById('fcCard').classList.toggle('flipped', FC.flipped);
+}
+
+function fcSpeak() {
+  const w = FC.pool[FC.idx];
+  if (w) {
+    const btn = document.getElementById('fcSpeakBtn');
+    btn.style.transform = 'scale(0.82)';
+    setTimeout(() => btn.style.transform = '', 250);
+    speak(w.w);
+  }
+}
+
+function fcNext() {
+  if (FC.idx < FC.pool.length - 1) {
+    FC.idx++; fcRender();
+  } else {
+    document.getElementById('fcFinishMsg').innerHTML = `Words reviewed: <strong>${FC.pool.length}</strong>`;
+    document.getElementById('fcCards').classList.add('hidden');
+    document.getElementById('fcFinish').classList.remove('hidden');
+  }
+}
+
+function fcPrev() {
+  if (FC.idx > 0) { FC.idx--; fcRender(); }
+}
+
+/* ════════════════════════════════════════════════
+   SUBTITLES PLAYER
+════════════════════════════════════════════════ */
+const SUB = { sentences: [], idx: 0, autoPlay: false };
+
+function openSubtitles() {
+  document.body.classList.add('modal-open');
+  subClearInput();
+  document.getElementById('subInputScreen').classList.remove('hidden');
+  document.getElementById('subPlayerScreen').classList.add('hidden');
+  document.getElementById('subModal').classList.remove('hidden');
+}
+
+function subLoadFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('subFileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('subTextarea').value = e.target.result;
+    document.getElementById('subErrMsg').textContent = '';
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+function closeSubtitles() {
+  document.body.classList.remove('modal-open');
+  subStopAuto();
+  document.getElementById('subModal').classList.add('hidden');
+}
+function showSubInput() {
+  subStopAuto();
+  subClearInput();
+  document.getElementById('subInputScreen').classList.remove('hidden');
+  document.getElementById('subPlayerScreen').classList.add('hidden');
+}
+
+function subClearInput() {
+  document.getElementById('subTextarea').value = '';
+  document.getElementById('subFileName').textContent = '';
+  document.getElementById('subErrMsg').textContent = '';
+  document.getElementById('subFileInput').value = '';
+}
+
+function parseSubtitles() {
+  const raw = document.getElementById('subTextarea').value.trim();
+  const errEl = document.getElementById('subErrMsg');
+  errEl.textContent = '';
+  if (!raw) { errEl.textContent = '⚠️ Please paste text or choose a file first.'; return; }
+
+  const lines = raw.split('\n');
+  const pairs = [];
+
+  // Detect format: numbered (1. English \n Russian) or plain text
+  const isNumbered = lines.some(l => /^\d+\.\s+/.test(l.trim()));
+
+  if (isNumbered) {
+    let pendingEn = null;
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      const m = line.match(/^\d+\.\s+(.+)/);
+      if (m) {
+        if (pendingEn !== null) pairs.push({ en: pendingEn, ru: '' });
+        pendingEn = m[1];
+      } else if (pendingEn !== null) {
+        pairs.push({ en: pendingEn, ru: line });
+        pendingEn = null;
+      }
+    }
+    if (pendingEn !== null) pairs.push({ en: pendingEn, ru: '' });
+  } else {
+    // Plain subtitle text: merge short lines into sentences
+    let buf = '';
+    for (let line of lines) {
+      line = line.trim();
+      if (!line) continue;
+      buf = buf ? buf + ' ' + line : line;
+      if (/[.!?]$/.test(buf) || buf.length > 120) {
+        pairs.push({ en: buf, ru: '' });
+        buf = '';
+      }
+    }
+    if (buf) pairs.push({ en: buf, ru: '' });
+  }
+
+  if (!pairs.length) { errEl.textContent = '⚠️ Could not parse format.'; return; }
+
+  // Show/hide translate button based on whether translations exist
+  const hasRu = pairs.some(p => p.ru);
+  document.getElementById('subTranslateBtn').style.display = hasRu ? 'none' : '';
+
+  SUB.sentences = pairs;
+  SUB.idx = 0;
+  subRenderList();
+  document.getElementById('subInputScreen').classList.add('hidden');
+  document.getElementById('subPlayerScreen').classList.remove('hidden');
+}
+
+function subRenderList() {
+  const list = document.getElementById('subList');
+  list.innerHTML = SUB.sentences.map((s, i) => `
+    <div class="sub-row${i === SUB.idx ? ' active' : ''}" id="sub-row-${i}" onclick="subGoTo(${i})">
+      <span class="sub-num">${i + 1}</span>
+      <div class="sub-texts">
+        <span class="sub-en">${escHtml(s.en)}</span>
+        ${s.ru ? `<span class="sub-ru">${escHtml(s.ru)}</span>` : ''}
+      </div>
+      <button class="sub-speak-btn${i === SUB.idx ? ' speaking' : ''}" id="sub-btn-${i}"
+        onclick="event.stopPropagation(); subGoTo(${i})" title="Play">🔊</button>
+    </div>`).join('');
+  subScrollTo(SUB.idx);
+  subUpdateCounter();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function subUpdateCounter() {
+  document.getElementById('subCounter').textContent = `${SUB.idx + 1} / ${SUB.sentences.length}`;
+}
+
+function subScrollTo(idx) {
+  const el = document.getElementById('sub-row-' + idx);
+  if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function subSetActive(idx) {
+  document.querySelectorAll('.sub-row').forEach((r, i) => {
+    r.classList.toggle('active', i === idx);
+    const btn = document.getElementById('sub-btn-' + i);
+    if (btn) btn.classList.toggle('speaking', i === idx);
+  });
+  subScrollTo(idx);
+  subUpdateCounter();
+}
+
+function subGoTo(idx) {
+  SUB.idx = idx;
+  subSetActive(idx);
+  subSpeak(idx);
+}
+
+function subSpeak(idx) {
+  const s = SUB.sentences[idx];
+  if (!s) return;
+  const synth = window.speechSynthesis;
+  if (!synth) return;
+  const mustCancel = synth.speaking || synth.pending;
+  if (mustCancel) synth.cancel();
+  const utt = new SpeechSynthesisUtterance(s.en);
+  utt.lang = 'en-US';
+  const v = resolveVoice();
+  if (v) utt.voice = v;
+  applyVoiceParams(utt, v, s.en);
+  utt.onend = () => {
+    if (SUB.autoPlay) {
+      if (SUB.idx < SUB.sentences.length - 1) {
+        setTimeout(() => {
+          if (SUB.autoPlay) { SUB.idx++; subSetActive(SUB.idx); subSpeak(SUB.idx); }
+        }, 600);
+      } else {
+        subStopAuto();
+      }
+    }
+  };
+  if (mustCancel) {
+    setTimeout(() => synth.speak(utt), 35);
+  } else {
+    synth.speak(utt);
+  }
+}
+
+function subPrev() {
+  if (SUB.idx > 0) { SUB.idx--; subSetActive(SUB.idx); subSpeak(SUB.idx); }
+}
+function subNext() {
+  if (SUB.idx < SUB.sentences.length - 1) { SUB.idx++; subSetActive(SUB.idx); subSpeak(SUB.idx); }
+}
+
+function toggleSubAutoPlay() {
+  if (SUB.autoPlay) { subStopAuto(); } else { subStartAuto(); }
+}
+function subStartAuto() {
+  SUB.autoPlay = true;
+  const btn = document.getElementById('subAutoBtn');
+  btn.textContent = '⏸ Pause'; btn.classList.add('playing');
+  subSpeak(SUB.idx);
+}
+function subStopAuto() {
+  SUB.autoPlay = false;
+  if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+  const btn = document.getElementById('subAutoBtn');
+  if (btn) { btn.textContent = '▶ Auto Play'; btn.classList.remove('playing'); }
+}
+
+async function translateAll() {
+  const total = SUB.sentences.length;
+  if (!total) return;
+
+  const btn = document.getElementById('subTranslateBtn');
+  const prog = document.getElementById('subTranslateProgress');
+  const fill = document.getElementById('subTranslateFill');
+  const label = document.getElementById('subTranslateLabel');
+
+  btn.disabled = true;
+  prog.classList.remove('hidden');
+
+  for (let i = 0; i < total; i++) {
+    if (SUB.sentences[i].ru) { // skip already translated
+      fill.style.width = Math.round((i + 1) / total * 100) + '%';
+      label.textContent = `Translating ${i + 1} / ${total}...`;
+      continue;
+    }
+    label.textContent = `Translating ${i + 1} / ${total}...`;
+    fill.style.width = Math.round((i + 1) / total * 100) + '%';
+    try {
+      const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&q='
+        + encodeURIComponent(SUB.sentences[i].en);
+      const res = await fetch(url);
+      const data = await res.json();
+      SUB.sentences[i].ru = data[0].map(x => x[0]).join('');
+    } catch (e) {
+      SUB.sentences[i].ru = '';
+    }
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  prog.classList.add('hidden');
+  btn.disabled = false;
+  btn.style.display = 'none';
+  subRenderList();
+}
+
+</script>
+</body>
+</html>
