@@ -87,17 +87,6 @@
       white-space: nowrap;
     }
 
-    .voice-notice {
-      font-size: 0.72rem;
-      color: #f0c060;
-      background: rgba(255,200,80,0.08);
-      border: 1px solid rgba(255,200,80,0.25);
-      border-radius: 8px;
-      padding: 6px 10px;
-      margin-bottom: 8px;
-      line-height: 1.4;
-    }
-
     .voice-name-list {
       display: flex;
       flex-wrap: wrap;
@@ -997,7 +986,6 @@
       </div>
       <div class="voice-popup hidden" id="voicePopup">
         <div class="voice-popup-title" id="voicePopupTitle">Choose voice name</div>
-        <p class="voice-notice" id="voiceNotice" style="display:none"></p>
         <div class="voice-name-list" id="voiceNameList"></div>
       </div>
     </div>
@@ -1282,20 +1270,6 @@ function syncVoiceNameList() {
   const pool = getVoicePool();
   const voices = getVoicesForType(selectedVoice).slice(0, 16);
   const selectedInList = voices.some(v => v.name === selectedVoiceName);
-
-  // Show notice when device has very few voices or no gender-specific ones
-  const noticeEl = document.getElementById('voiceNotice');
-  if (noticeEl) {
-    const hasTypedVoices = voices.length < pool.length;
-    if (!hasTypedVoices || pool.length <= 1) {
-      noticeEl.style.display = '';
-      noticeEl.textContent = pool.length <= 1
-        ? 'Only 1 voice on this device. Mode adjusts pitch & speed.'
-        : 'No gender-specific voices on this device. Mode adjusts pitch & speed.';
-    } else {
-      noticeEl.style.display = 'none';
-    }
-  }
 
   let renderList = voices;
   if (selectedVoiceName && !selectedInList) {
