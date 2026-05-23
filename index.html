@@ -1292,12 +1292,14 @@ function syncVoiceNameList() {
   }
 }
 
+let voicePopupPollTimer = null;
+
 function openVoicePopup() {
   const popup = document.getElementById('voicePopup');
   const title = document.getElementById('voicePopupTitle');
   if (!popup || !title) return;
 
-  // Always refresh — online neural voices may have loaded since last check
+  // Refresh immediately
   const fresh = window.speechSynthesis.getVoices();
   if (fresh.length > synthVoices.length) synthVoices = fresh;
 
@@ -1306,6 +1308,23 @@ function openVoicePopup() {
   syncVoiceNameList();
   popup.classList.remove('hidden');
   voicePopupOpen = true;
+
+  // Keep polling while popup is open — online neural voices may arrive seconds later
+  clearInterval(voicePopupPollTimer);
+  let pollCount = 0;
+  voicePopupPollTimer = setInterval(() => {
+    const live = window.speechSynthesis.getVoices();
+    if (live.length > synthVoices.length) {
+      synthVoices = live;
+      if (!selectedVoiceName) {
+        const saved = selectedVoiceByType[selectedVoice];
+        selectedVoiceName = saved || (bestVoiceFor(selectedVoice) || {name:''}).name;
+        selectedVoiceByType[selectedVoice] = selectedVoiceName;
+      }
+      syncVoiceNameList();
+    }
+    if (++pollCount >= 20) clearInterval(voicePopupPollTimer); // stop after 10s
+  }, 500);
 }
 
 function closeVoicePopup() {
@@ -1313,6 +1332,7 @@ function closeVoicePopup() {
   if (!popup) return;
   popup.classList.add('hidden');
   voicePopupOpen = false;
+  clearInterval(voicePopupPollTimer);
 }
 
 window.speechSynthesis.onvoiceschanged = () => {
