@@ -1233,7 +1233,8 @@ function getVoicesForType(type) {
   let list = [];
 
   if (type === 'all') {
-    list = pool;
+    // return ALL voices on the device — no lang/block filter so Android users see everything
+    return getSynthVoices();
   } else if (type === 'female') {
     list = pool.filter(v => WORKING_FEMALE_RE.test(v.name));
     if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
@@ -1271,23 +1272,26 @@ function syncVoiceNameList() {
   if (!listEl) return;
 
   const pool = getVoicePool();
-  const voices = getVoicesForType(selectedVoice).slice(0, 16);
+  const isAll = selectedVoice === 'all';
+  const voices = isAll ? getVoicesForType('all') : getVoicesForType(selectedVoice).slice(0, 16);
   const selectedInList = voices.some(v => v.name === selectedVoiceName);
 
   let renderList = voices;
-  if (selectedVoiceName && !selectedInList) {
-    const all = pool;
-    const selected = all.find(v => v.name === selectedVoiceName);
+  if (!isAll && selectedVoiceName && !selectedInList) {
+    const selected = pool.find(v => v.name === selectedVoiceName);
     if (selected) renderList = [selected, ...voices].slice(0, 16);
   }
 
-  listEl.innerHTML = renderList.map(v => {
-    const active = v.name === selectedVoiceName ? ' active' : '';
-    const label = shortVoiceName(v.name).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const title = v.name.replace(/"/g, '&quot;');
-    const escapedName = v.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    return `<button class="voice-name-btn${active}" title="${title}" onclick="setVoiceByName('${escapedName}')">${label}</button>`;
-  }).join('');
+  listEl.innerHTML = renderList.length
+    ? renderList.map(v => {
+        const active = v.name === selectedVoiceName ? ' active' : '';
+        // for 'all' show full name so user can see exact Android voice name
+        const label = (isAll ? v.name : shortVoiceName(v.name)).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const title = v.name.replace(/"/g, '&quot;');
+        const escapedName = v.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `<button class="voice-name-btn${active}" title="${title}" onclick="setVoiceByName('${escapedName}')">${label}</button>`;
+      }).join('')
+    : '<p style="color:#aaa;margin:8px">No voices found yet. Try reopening.</p>';
 
   if (!selectedVoiceName && renderList[0]) {
     selectedVoiceName = renderList[0].name;
