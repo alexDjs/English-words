@@ -1184,11 +1184,11 @@ const selectedVoiceByType = { female: '', male: '', child: '' };
 let voicePopupOpen = false;
 
 const BLOCKED_VOICE_RE = /elizabeth/i;
-const WORKING_FEMALE_RE = /\baria\b|\bava\b|\bzira\b|\bemma\b|\bmichelle\b/i;
+const WORKING_FEMALE_RE = /\baria\b|\bava\b|\bzira\b|\bemma\b|\bmichelle\b|\bfemale\b/i;
 const BLOCKED_MALE_RE = /\badam\b|\bbrandon\b|\bbrian\b|\bchristopher\b|\bdavis\b|\bderek\b|\bdustin\b|\bjacob\b|\bjason\b|\bkai\b|\blewis\b|\blawis\b|\bstefan\b|\bsteffan\b|\btony\b|\bryan\b|\btoi\b|\bsamuel\b|\btyler\b/i;
 
-const FEMALE_RE = /aria|jenny|michelle|sonia|libby|maisie|abbi|bella|hollie|leah|lily|mia|natasha|olivia|ava|samantha|zira|hazel|susan|victoria|karen|linda|emma|emily|natalie|amanda|amber|ashley|cora|evelyn|jane|lola|luna|monica|nancy|phoebe|sara|serena|tiana/i;
-const MALE_RE   = /guy|ryan|davis|tony|jason|brandon|eric|steffan|roger|david|mark|james|richard|charles|george|thomas|liam|adam|alex|andrew|daniel|john|michael|william|brian|christopher|derek|dustin|jacob|kai|lewis|samuel|tyler/i;
+const FEMALE_RE = /aria|jenny|michelle|sonia|libby|maisie|abbi|bella|hollie|leah|lily|mia|natasha|olivia|ava|samantha|zira|hazel|susan|victoria|karen|linda|emma|emily|natalie|amanda|amber|ashley|cora|evelyn|jane|lola|luna|monica|nancy|phoebe|sara|serena|tiana|\bfemale\b/i;
+const MALE_RE   = /\bmale\b|guy|ryan|davis|tony|jason|brandon|eric|steffan|roger|david|mark|james|richard|charles|george|thomas|liam|adam|alex|andrew|daniel|john|michael|william|brian|christopher|derek|dustin|jacob|kai|lewis|samuel|tyler/i;
 const CHILD_RE  = /\bana\b|child|kid/i;
 
 /* ════════════════════════════════════════════════
@@ -1239,8 +1239,8 @@ function getVoicesForType(type) {
     if (!list.length) list = pool.filter(v => !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   } else {
     list = pool.filter(v => CHILD_RE.test(v.name));
-    if (!list.length) list = pool.filter(v => MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
     if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
+    if (!list.length) list = pool.filter(v => !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   }
 
   if (!list.length) list = pool;
