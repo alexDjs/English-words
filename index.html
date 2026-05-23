@@ -983,6 +983,7 @@
         <button class="voice-btn active" id="btn-female"  onclick="setVoice('female')">👩 Female</button>
         <button class="voice-btn"        id="btn-male"    onclick="setVoice('male')">👨 Male</button>
         <button class="voice-btn"        id="btn-child"   onclick="setVoice('child')">👦 Child</button>
+        <button class="voice-btn"        id="btn-all"     onclick="setVoice('all')">🔊 All</button>
       </div>
       <div class="voice-popup hidden" id="voicePopup">
         <div class="voice-popup-title" id="voicePopupTitle">Choose voice name</div>
@@ -1231,7 +1232,9 @@ function getVoicesForType(type) {
   const pool = getVoicePool();
   let list = [];
 
-  if (type === 'female') {
+  if (type === 'all') {
+    list = pool;
+  } else if (type === 'female') {
     list = pool.filter(v => WORKING_FEMALE_RE.test(v.name));
     if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
   } else if (type === 'male') {
@@ -1303,7 +1306,10 @@ function openVoicePopup() {
   const fresh = window.speechSynthesis.getVoices();
   if (fresh.length > synthVoices.length) synthVoices = fresh;
 
-  const modeTitle = selectedVoice === 'female' ? 'Female voice names' : (selectedVoice === 'male' ? 'Male voice names' : 'Child voice names');
+  const modeTitle = selectedVoice === 'female' ? 'Female voice names'
+    : selectedVoice === 'male' ? 'Male voice names'
+    : selectedVoice === 'child' ? 'Child voice names'
+    : 'All available voices';
   title.textContent = modeTitle;
   syncVoiceNameList();
   popup.classList.remove('hidden');
