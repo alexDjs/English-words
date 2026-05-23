@@ -1208,7 +1208,10 @@ const CHILD_RE  = /\bana\b|child|kid/i;
 ════════════════════════════════════════════════ */
 let synthVoices = [];
 function getSynthVoices() {
-  return synthVoices.length ? synthVoices : window.speechSynthesis.getVoices();
+  // Always merge fresh voices — online neural voices arrive later than local ones
+  const live = window.speechSynthesis.getVoices();
+  if (live.length > synthVoices.length) synthVoices = live;
+  return synthVoices.length ? synthVoices : live;
 }
 
 function voiceRank(name) {
@@ -1320,11 +1323,9 @@ function openVoicePopup() {
   const title = document.getElementById('voicePopupTitle');
   if (!popup || !title) return;
 
-  // Re-fetch voices if not yet loaded (e.g. GitHub Pages slow init)
-  if (!synthVoices.length) {
-    const fresh = window.speechSynthesis.getVoices();
-    if (fresh.length) synthVoices = fresh;
-  }
+  // Always refresh — online neural voices may have loaded since last check
+  const fresh = window.speechSynthesis.getVoices();
+  if (fresh.length > synthVoices.length) synthVoices = fresh;
 
   const modeTitle = selectedVoice === 'female' ? 'Female voice names' : (selectedVoice === 'male' ? 'Male voice names' : 'Child voice names');
   title.textContent = modeTitle;
