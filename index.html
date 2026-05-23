@@ -1222,9 +1222,17 @@ function getVoicePool() {
 }
 
 function shortVoiceName(fullName) {
-  const clean = String(fullName || '').replace(/^Microsoft\s+/i, '').split(' - ')[0].trim();
-  const first = clean.split(/\s+/)[0] || clean || 'Voice';
-  return first;
+  const raw = String(fullName || '');
+  const clean = raw
+    .replace(/^Microsoft\s+/i, '')
+    .split(' - ')[0]
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\b(natural|online|neural|multilingual|desktop|voice|tts)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const first = clean.split(/\s+/).find(Boolean) || '';
+  return first || 'Voice';
 }
 
 function getVoicesForType(type) {
@@ -1242,7 +1250,8 @@ function getVoicesForType(type) {
     if (!list.length) list = pool.filter(v => !FEMALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   } else {
     list = pool.filter(v => CHILD_RE.test(v.name));
-    if (!list.length) list = pool.filter(v => FEMALE_RE.test(v.name));
+    // If no explicit child voice exists, prefer a neutral fallback instead of forcing female.
+    if (!list.length) list = pool.filter(v => !BLOCKED_MALE_RE.test(v.name));
     if (!list.length) list = pool.filter(v => !MALE_RE.test(v.name) && !BLOCKED_MALE_RE.test(v.name));
   }
 
@@ -1255,10 +1264,12 @@ function getVoicesForType(type) {
     return a.name.localeCompare(b.name);
   });
 
+  // Keep one item per real engine voice name.
+  // On Android many names share the same first word, so short-label dedupe hides valid choices.
   const unique = [];
   const seen = new Set();
   for (const v of sorted) {
-    const key = shortVoiceName(v.name).toLowerCase();
+    const key = String(v.name || '').toLowerCase().trim();
     if (seen.has(key)) continue;
     seen.add(key);
     unique.push(v);
@@ -1272,13 +1283,13 @@ function syncVoiceNameList() {
 
   const pool = getVoicePool();
   const isAll = selectedVoice === 'all';
-  const voices = isAll ? getVoicesForType('all') : getVoicesForType(selectedVoice).slice(0, 16);
+  const voices = isAll ? getVoicesForType('all') : getVoicesForType(selectedVoice).slice(0, 40);
   const selectedInList = voices.some(v => v.name === selectedVoiceName);
 
   let renderList = voices;
   if (!isAll && selectedVoiceName && !selectedInList) {
     const selected = pool.find(v => v.name === selectedVoiceName);
-    if (selected) renderList = [selected, ...voices].slice(0, 16);
+    if (selected) renderList = [selected, ...voices].slice(0, 40);
   }
 
   listEl.innerHTML = renderList.length
