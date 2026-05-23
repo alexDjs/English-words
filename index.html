@@ -2223,8 +2223,14 @@ function parseSubtitles() {
   const lines = raw.split('\n');
   const pairs = [];
 
-  // Detect format: numbered (1. English \n Russian) or plain text
+  // Detect format: numbered (1. English \n Russian) or alternating EN/RU or plain text
   const isNumbered = lines.some(l => /^\d+\.\s+/.test(l.trim()));
+  const nonEmpty = lines.map(l => l.trim()).filter(Boolean);
+  const isCyrillic = s => /[а-яёА-ЯЁ]/.test(s);
+  // Alternating: even lines English, odd lines Cyrillic (or vice versa)
+  const isAlternating = nonEmpty.length >= 4 &&
+    nonEmpty.every((l, i) => i % 2 === 0 ? !isCyrillic(l) : isCyrillic(l)) ||
+    nonEmpty.every((l, i) => i % 2 === 0 ? isCyrillic(l) : !isCyrillic(l));
 
   if (isNumbered) {
     let pendingEn = null;
@@ -2241,6 +2247,14 @@ function parseSubtitles() {
       }
     }
     if (pendingEn !== null) pairs.push({ en: pendingEn, ru: '' });
+  } else if (isAlternating) {
+    // Alternating EN/RU lines
+    const firstIsRu = isCyrillic(nonEmpty[0]);
+    for (let i = 0; i < nonEmpty.length - 1; i += 2) {
+      const a = nonEmpty[i], b = nonEmpty[i + 1];
+      if (firstIsRu) pairs.push({ en: b, ru: a });
+      else pairs.push({ en: a, ru: b });
+    }
   } else {
     // Plain subtitle text: merge short lines into sentences
     let buf = '';
