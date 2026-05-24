@@ -1195,6 +1195,51 @@ const CHILD_RE  = /\bana\b|child|kid/i;
    SPEECH SYNTHESIS
 ════════════════════════════════════════════════ */
 let synthVoices = [];
+let speechUnlocked = false;
+let speechUnlockAttempted = false;
+
+function unlockSpeechSynthesis() {
+  if (speechUnlocked || speechUnlockAttempted || !window.speechSynthesis) return;
+  speechUnlockAttempted = true;
+
+  const synth = window.speechSynthesis;
+  try {
+    // iOS/Android often require one gesture-driven speak() call before normal playback works.
+    const warmup = new SpeechSynthesisUtterance(' ');
+    warmup.lang = 'en-US';
+    warmup.volume = 0;
+    warmup.rate = 1;
+    warmup.pitch = 1;
+    warmup.onstart = () => { speechUnlocked = true; };
+    warmup.onend = () => { speechUnlocked = true; };
+
+    synth.cancel();
+    synth.speak(warmup);
+    setTimeout(() => synth.cancel(), 60);
+  } catch (e) {
+    // Keep app functional even if warmup is not supported by this browser.
+  }
+
+  const live = synth.getVoices();
+  if (live.length > synthVoices.length) synthVoices = live;
+  syncVoiceNameList();
+}
+
+function bindSpeechUnlockGestures() {
+  const unlockOnce = () => {
+    unlockSpeechSynthesis();
+    document.removeEventListener('pointerdown', unlockOnce, true);
+    document.removeEventListener('touchstart', unlockOnce, true);
+    document.removeEventListener('click', unlockOnce, true);
+    document.removeEventListener('keydown', unlockOnce, true);
+  };
+
+  document.addEventListener('pointerdown', unlockOnce, { capture: true, passive: true });
+  document.addEventListener('touchstart', unlockOnce, { capture: true, passive: true });
+  document.addEventListener('click', unlockOnce, { capture: true, passive: true });
+  document.addEventListener('keydown', unlockOnce, true);
+}
+
 function getSynthVoices() {
   // Always merge fresh voices — online neural voices arrive later than local ones
   const live = window.speechSynthesis.getVoices();
@@ -1361,7 +1406,7 @@ function closeVoicePopup() {
   clearInterval(voicePopupPollTimer);
 }
 
-window.speechSynthesis.onvoiceschanged = () => {
+function handleVoicesChanged() {
   synthVoices = window.speechSynthesis.getVoices();
   if (!selectedVoiceName) {
     const saved = selectedVoiceByType[selectedVoice];
@@ -1374,7 +1419,15 @@ window.speechSynthesis.onvoiceschanged = () => {
     }
   }
   syncVoiceNameList();
-};
+}
+
+if ('onvoiceschanged' in window.speechSynthesis) {
+  if (typeof window.speechSynthesis.addEventListener === 'function') {
+    window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+  } else {
+    window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+  }
+}
 
 // Retry loading voices until count stabilizes — needed for GitHub Pages where voices arrive in batches
 (function tryLoadVoices(attempt, lastCount) {
@@ -1392,6 +1445,8 @@ window.speechSynthesis.onvoiceschanged = () => {
     setTimeout(() => tryLoadVoices(attempt + 1, voices.length), 200 * Math.min(attempt + 1, 5));
   }
 })(0, -1);
+
+bindSpeechUnlockGestures();
 
 function pickVoice(type) {
   const pool = getVoicePool();
